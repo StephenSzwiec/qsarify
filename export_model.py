@@ -1,16 +1,10 @@
 #-*- coding: utf-8 -*-
-
 import numpy as np
-from numpy import ndarray
 import pandas as pd
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from sklearn.metrics import mean_squared_error , r2_score
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import LinearRegression
 from matplotlib import pyplot as plt
-# utility functions for QSAR specific scoring functions
-from qsar_utility_functions import q2_score, q2f3_score, ccc_score
-
 class ModelExport:
     """
     Summary model information, plotting, and exporting
@@ -30,6 +24,17 @@ class ModelExport:
     """
 
     def __init__(self, X_data, y_data, exXdata, exYdata, feature_set):
+        """
+        Initializes a ModelExport object
+
+        Parameters
+        ----------
+        X_data : pandas DataFrame, shape = (n_samples, n_features)
+        y_data : pandas DataFrame , shape = (n_samples,)
+        exXdata : pandas DataFrame, shape = (n_samples, n_features)
+        exYdata : pandas DataFrame , shape = (n_samples,)
+        feature_set : list, set of features that make up model
+        """
         self.x = X_data.loc[:,feature_set].values
         self.y = y_data.values
         self.ex = exXdata.loc[:, feature_set].values
@@ -40,29 +45,30 @@ class ModelExport:
         self.y_pred = self.lr.predict(self.x)
         self.ey_pred = self.lr.predict(self.ex)
 
-    """
-    Show training data prediction plot
-
-    Returns
-    -------
-    None
-    """
     def train_plot(self):
+        """
+        Show training data prediction plot
+
+        Returns
+        -------
+        None
+        """
         plt.ylabel("Predicted Y")
         plt.xlabel("Actual Y")
         plt.scatter(self.y,self.y_pred,color=['gray'])
         plt.plot([self.y.min() , self.y.max()] , [[self.y.min()],[self.y.max()]],"black" )
         plt.show()
 
-    """
-    Show residuals of training plot
-    Optionally, show residuals of test plot
-
-    Returns
-    -------
-    None
-    """
     def williams_plot(self):
+        """
+        Show the Williams Plot for the data
+        defines the applicability domain of the model
+        and the points that are outliers in the data
+
+        Returns
+        -------
+        None
+        """     
         # standard deviation of y
         y_std = np.std(self.y)
         residuals = res = (self.y - self.y_pred)/y_std
@@ -92,14 +98,14 @@ class ModelExport:
         plt.plot()
         plt.show()
 
-    """
-    Model information with result of multiple linear regression
+    def mlr(self):
+        """
+        Model information with result of multiple linear regression
 
-    Returns
-    -------
-    None
-    """
-    def mlr(self) :
+        Returns
+        -------
+        None
+        """
         print('Model features: ',self.feature_set)
         print('Coefficients: ', self.fit.coef_)
         print('Intercept: ',self.fit.intercept_)
@@ -110,52 +116,46 @@ class ModelExport:
         # Explained variance score
         print('R^2: %.6f' % r2_score(self.y, self.y_pred))
 
-    """
-    Show correlation of features
-
-    Returns
-    -------
-    table
-    """
     def features_table(self) :
+        """
+        Show correlation of features to target
+
+        Returns
+        -------
+        table
+        """
         desc = DataFrame(self.x, columns=self.feature_set)
-        result = pd.concat([desc, self.y], axis=1, join='inner')
+        target = DataFrame(self.y, columns=['response'])
+        result = pd.concat([desc, target], axis=1, join='inner')
         return result
 
-    """
-    Correlation coefficient of features table
 
-    Returns
-    -------
-    table
-    """
     def model_corr(self) :
+        """
+        Correlation coefficient of features table
+
+        Returns
+        -------
+        table
+        """
         X = DataFrame(self.x, columns=self.feature_set)
-        result = pd.concat([X, self.x], axis=1, join='inner')
-        pd.plotting.scatter_matrix (result, alpha=0.5, diagonal='kde')
-        return result.corr()
+        fig = pd.plotting.scatter_matrix(X, alpha=0.7, diagonal='kde')
+        for subaxis in fig:
+            for ax in subaxis:
+                ax.xaxis.set_ticks([])
+                ax.yaxis.set_ticks([])
+                ax.set_ylabel('')
 
-    """
-    Prediction external data set
-
-    Parameters
-    ----------
-    X_data : pandas DataFrame , shape = (n_samples, n_features)
-    y_data : pandas DataFrame , shape = (n_samples,)
-    exdataX :pandas DataFrame , shape = (n_samples, n_features)
-    => External data set x
-    exdataY :pandas DataFrame , shape = (n_samples,)
-    => External data set y
-    feature_set : list, set of features that make up model
-
-    Returns
-    -------
-    None
-    """
     def external_set(self):
-        #print('Predicted external Y \n',expred)
+        """
+        Prediction external data set
+
+        Returns
+        -------
+        None
+        """
         print('R2',r2_score(self.y, self.y_pred))
-        print('R2_ext', r2_score(self.ey, self.ey_pred))
+        print('Q2', r2_score(self.ey, self.ey_pred))
         print('RMSE', np.sqrt(mean_squared_error(self.y_pred,self.y)))
         print('coef', self.fit.coef_)
         print('intercept', self.fit.intercept_)
@@ -167,35 +167,31 @@ class ModelExport:
         plt.show()
 
 
-    """
-    Y-scrambling plot for model validation
-
-    Parameters
-    ----------
-    X_data : pandas DataFrame , shape = (n_samples, n_features)
-    y_data : pandas DataFrame , shape = (n_samples,)
-    feature_set : list, set of features that make up model
-    n : int, number of iterations for y-scrambling, defaults to 1000
-
-    Returns
-    -------
-    None
-    """
     def y_scrambling(self, n=1000):
-
         """
-        Returns Kxy value for a given covariance matrix
+        Y-scrambling plot for model validation
 
         Parameters
         ----------
-        X : pandas dataframe, shape (n_samples, n_features)
-        Y : pandas dataframe, shape (n_samples)
+        n : int, number of iterations for y-scrambling, defaults to 1000
 
         Returns
         -------
-        kxy : the Kxy value for the given covariance matrix or zero if the covariance matrix contains NaN values
+        None
         """
-        def kxy_value(x, y):
+        def kxy_value(x, y): 
+            """
+            Returns Kxy value for a given covariance matrix
+
+            Parameters
+            ----------
+            X : pandas dataframe, shape (n_samples, n_features)
+            Y : pandas dataframe, shape (n_samples)
+
+            Returns
+            -------
+            kxy : the Kxy value for the given covariance matrix or zero if the covariance matrix contains NaN values
+            """
             # calculate the covariance matrix
             cov = np.corrcoef(x, y, rowvar=False)
             if (np.isnan(np.sum(cov))):

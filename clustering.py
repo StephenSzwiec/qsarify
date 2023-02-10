@@ -5,18 +5,20 @@ from pandas import DataFrame, Series
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import pdist, squareform
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster, cophenet
-"""
-Calculate the cophenetic correlation coefficient of linkages
+from sklearn.decomposition import PCA
 
-Parameters
-----------
-X_data : pandas DataFrame, shape = (n_samples, n_features)
-
-Returns
--------
-None
-"""
 def cophenetic(X_data):
+    """
+    Calculate the cophenetic correlation coefficient of linkages
+
+    Parameters
+    ----------
+    X_data : pandas DataFrame, shape = (n_samples, n_features)
+
+    Returns
+    -------
+    None
+    """
     distance = abs(np.corrcoef(X_data, rowvar=False))
     # drop any columns and rows that produced NaNs
     distance = distance[~np.isnan(distance).any(axis=1)]
@@ -32,22 +34,35 @@ def cophenetic(X_data):
     print("cophenetic correlation complete linkage: ", c2)
     print("cophenetic correlation single linkage: ", c3)
 
-"""
-Make cluster of features based on hierarchical clustering method
-
-Parameters
-----------
-X_data : pandas DataFrame, shape = (n_samples, n_features)
-link : str, kind of linkage method, default = 'average'
-cut_d : int, depth in cluster(dendrogram), default = 3
-
-Sub functions
--------------
-set_cluster(self)
-cluster_dist(self)
-"""
 class featureCluster:
+    """
+    Make cluster of features based on hierarchical clustering method
+
+    Parameters
+    ----------
+    X_data : pandas DataFrame, shape = (n_samples, n_features)
+    link : str, kind of linkage method, default = 'average'
+    cut_d : int, depth in cluster(dendrogram), default = 3
+
+    Sub functions
+    -------------
+    set_cluster(self)
+    cluster_dist(self)
+    """
+   
     def __init__(self, X_data, link='average', cut_d=3):
+        """
+        Initializes cluster object:
+        Makes a cluster of features based on hierarchical clustering method
+        and calculates the cophenetic correlation coefficient of linkages
+
+        Parameters
+        ----------
+        X_data : pandas DataFrame, shape = (n_samples, n_features)
+        link : str, kind of linkage method, default = 'average', 'complete', 'single'
+        cut_d : int, depth in cluster(dendrogram), default = 3
+                This is a tunable parameter for clustering
+        """
         self.cluster_info = []
         self.assignments = np.array([])
         self.cluster_output = DataFrame()
@@ -57,17 +72,19 @@ class featureCluster:
         self.link = link
         self.cut_d = cut_d
 
-    """
-    Make cluster of features based on hierarchical clustering method
+    def set_cluster(self, verbose=False, graph=False):
+        """
+        Make cluster of features based on hierarchical clustering method
 
-    Parameters
-    ----------
-    None
+        Parameters
+        ----------
+        verbose : bool, print cluster information, default = False
+        graph : bool, show dendrogram, default = False
 
-    -------
-    cludict : dict, cluster information of features as a dictionary
-    """
-    def set_cluster(self):
+        Returns
+        -------
+        cludict : dict, cluster information of features as a dictionary
+        """
         Z = linkage( self.xcorr, method=self.link, metric='euclidean')
         self.assignments = fcluster(Z, self.cut_d, criterion='distance')
         self.cluster_output = DataFrame({'Feature':list(self.X_data.columns.values), 'cluster':self.assignments})
@@ -79,17 +96,26 @@ class featureCluster:
         # print cluster information for key in cludict.items if range of cluster number is 1~nnc
         for t in range(1, max(nc)+1):
             self.cluster_info.append( [k for k, v in self.cludict.items() if v == t] )
-            print('\n','\x1b[1;46m'+'Cluster'+'\x1b[0m',t,self.cluster_info[t-1],)
+            if verbose:
+                print('\n','\x1b[1;46m'+'Cluster'+'\x1b[0m',t,self.cluster_info[t-1],)
+        if graph:    
+            plt.figure(figsize=(25, 40))
+            plt.title('Hierarchical Clustering Dendrogram')
+            plt.xlabel('sample index')
+            plt.ylabel('distance')
+            dendrogram(Z, color_threshold=self.cut_d, above_threshold_color='k', no_labels=True, leaf_label_func=None, show_contracted=True, orientation='left')
+            plt.show()
         return self.cludict
 
-    """
-    Show dendrogram of hierarchical clustering
-
-    Returns
-    -------
-    None
-    """
     def cluster_dist(self):
+        """
+        Show dendrogram of hierarchical clustering
+
+        Returns
+        -------
+        None
+        """
+        
         # have we actually clustered? If not, please do so first:
         if self.assignments.any() == False:
             self.set_cluster()
@@ -102,3 +128,5 @@ class featureCluster:
         plt.ylabel("Frequency")
         plt.xlabel("Correlation coefficient of each cluster")
         plt.show()
+
+  

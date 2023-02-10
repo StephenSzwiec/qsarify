@@ -1,28 +1,16 @@
 #-*- coding: utf-8 -*-
-# for classification model_selection
-
-import datetime
-import random
-import copy
-import math
-import pandas as pd
-from pandas import DataFrame, Series
 import numpy as np
-from numpy import ndarray
-import sklearn.linear_model as lm
-from sklearn import preprocessing
-from sklearn import datasets
-from sklearn.metrics import mean_squared_error , r2_score, accuracy_score
-from sklearn.svm import SVC
-
+from sklearn.metrics import accuracy_score
 class ClassifierScore :
     """
     Provides summary information about Classification
+    
     Parameters
     ----------
     y_data : pandas DataFrame , shape = (n_samples,)
     pred_y : pandas DataFrame , shape = (n_samples,)
     => predicted Y values as result of classification
+    
     Sub functions
     -------
     score (self)
@@ -30,6 +18,9 @@ class ClassifierScore :
     """
 
     def __init__ (self,y_data,pred_y) :
+        """
+        Initializes the classifer
+        """
         self.y_data = y_data
         self.pred_y = pred_y
         self.real_y = [] #hash y_data
@@ -57,6 +48,8 @@ class ClassifierScore :
     def tf_table(self) :
         """
         Calculate Precision & Recall
+        Generates a confusion matrix
+        
         Returns
         -------
         None
@@ -92,3 +85,4 @@ class ClassifierScore :
         print('False Negative(real 1 but pred 0) :',realone)  #FN
         print('Precision', (one-realone)/((one-realone)+realzero)) # TP / TP+FP
         print('Recall',(one-realone)/((one-realone)+realone)) #  TP / TP+FN
+
