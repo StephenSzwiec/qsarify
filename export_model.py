@@ -1,10 +1,41 @@
 #-*- coding: utf-8 -*-
+# Author: Stephen Szwiec
+# Date: 2023-02-19
+# Description: Model Export Module
+"""
+Copyright (C) 2023 Stephen Szwiec
+
+This file is part of pyqsarplus. 
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+from sklearn.feature_selection import f_regression
 from sklearn.metrics import mean_squared_error , r2_score
 from sklearn.linear_model import LinearRegression
 from matplotlib import pyplot as plt
+from matplotlib.projections import PolarAxes
+from matplotlib.transforms import Affine2D
+from matplotlib.projections import register_projection
+from matplotlib.spines import Spine
+from matplotlib.path import Path
+from matplotlib.patches import Circle, RegularPolygon
+from qsar_scoring import q2_score, q2f_score, q2f3_score, ccc_score
+
 class ModelExport:
     """
     Summary model information, plotting, and exporting
@@ -20,6 +51,7 @@ class ModelExport:
     train_plot(self)
     mlr(self)
     features_table(self)
+    scores(self)
     model_corr(self)
     """
 
@@ -45,9 +77,13 @@ class ModelExport:
         self.y_pred = self.lr.predict(self.x)
         self.ey_pred = self.lr.predict(self.ex)
 
-    def train_plot(self):
+    def train_plot(self, interval=False):
         """
         Show training data prediction plot
+
+        Parameters
+        ----------
+        interval : bool, optional, if True, shows 95% confidence interval
 
         Returns
         -------
@@ -55,9 +91,39 @@ class ModelExport:
         """
         plt.ylabel("Predicted Y")
         plt.xlabel("Actual Y")
-        plt.scatter(self.y,self.y_pred,color=['gray'])
+        plt.scatter(self.y,self.y_pred,color=['lightblue'])
+        if interval:
+            plt.errorbar(self.y, self.y_pred, yerr=1.96*np.sqrt(self.y_pred), fmt='o', color='blue', ecolor='blue', elinewidth=1, capsize=0)
         plt.plot([self.y.min() , self.y.max()] , [[self.y.min()],[self.y.max()]],"black" )
+        plt.legend(["Actual Y", "Predicted Y"], loc="upper left")
         plt.show()
+
+    def scores(self, verbose=False):
+        """
+        Return scoring metrics for the model
+
+        Parameters
+        ----------
+        verbose : bool, optional, if True, prints all scoring metrics
+
+        Returns
+        -------
+        dict of scoring metrics
+        """
+        scores = {}
+        scores["RMSE"] = np.sqrt(mean_squared_error(self.y, self.y_pred))
+        scores["RMSE External"] = np.sqrt(mean_squared_error(self.ey, self.ey_pred))
+        scores["R2"] = r2_score(self.y, self.y_pred)
+        scores["Q2"] = q2_score(self.ey, self.ey_pred)
+        if verbose:
+            scores["Q2F1"] = q2f_score(self.ey, self.ey_pred, np.mean(self.y))
+            scores["Q2F2"] = q2f_score(self.ey, self.ey_pred, np.median(self.ey))
+            scores["Q2F3"] = q2f3_score(self.ey, self.ey_pred, len(self.y), len(self.ey))
+            scores["CCC"] = ccc_score(np.append(self.y, self.ey), np.append(self.y_pred, self.ey_pred))
+        for key, value in scores.items():
+                print(key, ":", value)
+        return scores
+
 
     def williams_plot(self):
         """
@@ -93,9 +159,10 @@ class ModelExport:
         plt.ylabel("Std. Residuals")
         plt.xlabel(F"Hat Values (h*={hii:.2f})")
         plt.ylim([-3.5,3.5])
-        plt.scatter(leverage_in,res,color=['gray'])
-        plt.scatter(leverage_ex,residuals_ex,color=['red'])
+        plt.scatter(leverage_in,res,color=['lightblue'])
+        plt.scatter(leverage_ex,residuals_ex,color=['orange'])
         plt.plot()
+        plt.legend(["Applicability Domain", "Training Data", "Test Data"], loc="upper right")
         plt.show()
 
     def mlr(self):
@@ -146,9 +213,15 @@ class ModelExport:
                 ax.yaxis.set_ticks([])
                 ax.set_ylabel('')
 
-    def external_set(self):
+    def external_set(self, verbose=False, interval=False):
         """
         Prediction external data set
+
+        Parameters
+        ----------
+        verbose : bool, optional, if True show more scoring metrics. The default is False.
+        interval : bool, optional, if True show 95-percent confidence interval. The default is False.
+
 
         Returns
         -------
@@ -159,11 +232,20 @@ class ModelExport:
         print('RMSE', np.sqrt(mean_squared_error(self.y_pred,self.y)))
         print('coef', self.fit.coef_)
         print('intercept', self.fit.intercept_)
+        if verbose:
+            print('Q2F1', q2f_score(self.ey, self.ey_pred, np.mean(self.y)))
+            print('Q2F2', q2f_score(self.ey, self.ey_pred, np.mean(self.ey)))
+            print('Q2F3', q2f3_score(self.ey, self.ey_pred, len(self.y), len(self.ey)))
+            print('CCC', ccc_score(self.ey, self.ey_pred))
         plt.ylabel("Predicted Y")
         plt.xlabel("Actual Y")
-        plt.scatter(self.y,self.y_pred,color=['gray'])
-        plt.scatter(self.ey,self.ey_pred,color=['red'])
+        plt.scatter(self.y,self.y_pred,color=['lightblue'])
+        plt.scatter(self.ey,self.ey_pred,color=['orange'])
+        if interval:
+            plt.errorbar(self.y, self.y_pred, yerr=self.y_pred_std, fmt='o', color='lightblue', ecolor='lightgray', elinewidth=3, capsize=0)
+            plt.errorbar(self.ey, self.ey_pred, yerr=self.ey_pred_std, fmt='o', color='orange', ecolor='lightgray', elinewidth=3, capsize=0)
         plt.plot([self.y.min() , self.y.max()] , [[self.y.min()],[self.y.max()]],"black" )
+        plt.legend(["Ideal", "Training Data", "Test Data"], loc="upper left")
         plt.show()
 
 
@@ -227,5 +309,184 @@ class ModelExport:
         plt.ylabel("Score")
         plt.ylim(0, 1)
         # Add legend and show plot
-        plt.legend(bbox_to_anchor=(1.02, 1.0), loc='upper left')
+        plt.legend()
         plt.show()
+
+    def p_value(self):
+        """
+        P-value of features
+
+        Returns
+        -------
+        table
+        """
+        X = DataFrame(self.x, columns=self.feature_set)
+        p_values = f_regression(X, self.y)[1]
+        p_values = np.round(p_values, 3)
+        p_values = p_values.tolist()
+        return p_values
+
+    def p_value_plot(self):
+        """
+        P-value plot of features
+
+        Returns
+        -------
+        None
+        """
+        p_values = self.p_value()
+        plt.bar(self.feature_set, p_values)
+        plt.ylabel("P-value")
+        plt.xlabel("Features")
+        plt.show()
+    
+    def p_value_table(self):
+        """
+        P-value table of features
+
+        Returns
+        -------
+        table
+        """
+        p_values = self.p_value()
+        return DataFrame(p_values, index=self.feature_set, columns=['p-value'])
+
+    def feature_importance(self):
+        """
+        Feature importance of features
+
+        Returns
+        -------
+        table
+        """
+        X = DataFrame(self.x, columns=self.feature_set)
+        feature_importance = self.fit.coef_
+        feature_importance = 100.0 * (feature_importance / feature_importance.max())
+        feature_importance = np.round(feature_importance, 2)
+        feature_importance = feature_importance.tolist()
+        return feature_importance
+
+    def feature_importance_plot(self):
+        """
+        Feature importance plot of features
+
+        Returns
+        -------
+        None
+        """
+        feature_importance = self.feature_importance()
+        plt.bar(self.feature_set, feature_importance)
+        plt.ylabel("Feature importance")
+        plt.xlabel("Features")
+        plt.show()
+
+    def feature_importance_table(self):
+        """
+        Feature importance table of features
+
+        Returns
+        -------
+        table
+        """
+        feature_importance = self.feature_importance()
+        return DataFrame(feature_importance, index=self.feature_set, columns=['feature importance'])
+
+    def __radar_factory__(num_vars, frame='polygon'):
+        """
+        Create a radar chart with `num_vars` axes.
+
+        Credit: https://matplotlib.org/stable/gallery/specialty_plots/radar_chart.html
+
+        Parameters
+        ----------
+        num_vars : int, number of variables for radar chart
+        frame : str, shape of frame for radar chart, defaults to 'circle'
+
+        """
+
+        theta = np.linspace(0, 2*np.pi, num_vars, endpoint=False)
+        # close the plot
+        class RadarTransform(PolarAxes.PolarTransform):
+            
+            def transform_path_non_affine(self, path):
+                if path._interpolation_steps > 1:
+                    path = path.interpolated(num_vars)
+                return Path(self.transform(path.vertices), path.codes)
+
+        class RadarAxes(PolarAxes):
+            name = 'radar'
+            PolarTransform = RadarTransform
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                # rotate plot such that the first axis is at the top
+                self.set_theta_zero_location('N')
+
+            def fill(self, *args, closed=True, **kwargs):
+                """Override fill so that line is closed by default"""
+                return super().fill(closed=closed, *args, **kwargs)
+            
+            def plot(self, *args, **kwargs):
+                """Override plot so that line is closed by default"""
+                lines = super().plot(*args, **kwargs)
+                for line in lines:
+                    self._close_line(line)
+
+            def _close_line(self, line):
+                x, y = line.get_data()
+                if x[0] != x[-1]:
+                    x = np.concatenate((x, [x[0]]))
+                    y = np.concatenate((y, [y[0]]))
+                    line.set_data(x, y)
+
+            def set_varlabels(self, labels):
+                self.set_thetagrids(np.degrees(theta), labels)
+
+            def _gen_axes_patch(self):
+                # The Axes patch must be centered at (0.5, 0.5) and of radius
+                # 0.5 in axes coordinates.
+                if frame == 'circle':
+                    return Circle((0.5, 0.5), 0.5)
+                elif frame == 'polygon':
+                    return RegularPolygon((0.5, 0.5), num_vars,
+                                          radius=.5, edgecolor="k")
+                else:
+                    raise ValueError("unknown value for 'frame': %s" % frame)
+
+            def _gen_axes_spines(self):
+                if frame == 'circle':
+                    return super()._gen_axes_spines()
+                elif frame == 'polygon':
+                    # spine_type must be 'left'/'right'/'top'/'bottom'/'circle'.
+                    spine = Spine(axes=self,
+                                  spine_type='circle',
+                                  path=Circle((0.5, 0.5), 0.5))
+                    spine.set_transform(self.transAxes)
+                    return {'polar': spine}
+                else:
+                    raise ValueError("unknown value for 'frame': %s" % frame)
+
+        register_projection(RadarAxes)
+        return theta
+
+    def radar_plot(self): 
+        """
+        Creates a radar plot of the scoring metrics: r2, q2, rmse, rmse_ext, q2f1, q2f2, q2f3, and ccc
+7
+        Returns
+        -------
+        None
+        """
+        n = 8
+        theta = self.__radar_factory__(n)
+        scores = self.scores(verbose=True).values.tolist()
+        spoke_labels = ['r2', 'q2', 'rmse', 'rmse_ext', 'q2f1', 'q2f2', 'q2f3', 'ccc']
+        fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(projection='radar'))
+        fig.subplots_adjust(top=0.85, bottom=0.05)
+        ax.set_rgrids([0.2, 0.4, 0.6, 0.8, 1.0])
+        ax.set_title('Scoring Metrics', weight='bold', size='medium', position=(0.5, 1.1), horizontalalignment='center', verticalalignment='center')
+        ax.plot(theta, scores)
+        ax.fill(theta, scores, alpha=0.25)
+        ax.set_varlabels(spoke_labels)
+        plt.show()
+    

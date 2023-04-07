@@ -1,4 +1,26 @@
 #-*- coding: utf-8 -*-
+# Author: Stephen Szwiec
+# Date: 2023-02-19
+# Description: Data Preprocessing Module
+"""
+Copyright (C) 2023 Stephen Szwiec
+
+This file is part of pyqsarplus. 
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
 import numpy as np
 from numpy import ndarray
 import pandas as pd
@@ -116,6 +138,8 @@ def clean_data(X_data, cutoff=None, plot=False):
     if plot:
         plt.matshow(df.corr())
         plt.set_cmap('seismic')
+        # show legend for the matrix
+        plt.colorbar()
         plt.show()
     return pd.DataFrame(MinMaxScaler().fit_transform(df), columns=list(df.columns.values))
 
@@ -172,3 +196,4 @@ def random_split(X_data, y_data, test_size=0.2):
     train_idx = X_data.index.difference(test_idx)
     # return train and test data
     return X_data.loc[train_idx], X_data.loc[test_idx], y_data.loc[train_idx], y_data.loc[test_idx]
+

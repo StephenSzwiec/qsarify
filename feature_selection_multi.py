@@ -1,4 +1,26 @@
 #-*- coding: utf-8 -*-
+# Author: Stephen Szwiec
+# Date: 2023-02-19
+# Description: Multi-Processing Feature Selection Module
+"""
+Copyright (C) 2023 Stephen Szwiec
+
+This file is part of pyqsarplus. 
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
 import datetime
 import random
 import numpy as np
@@ -106,7 +128,7 @@ def selection(X_data, y_data, cluster_info, model="regression", learning=500000,
     cluster = list(dict(sorted(inv_cluster_info.items())).values())
 
     # fill the interation bank with random models
-    # models contain 1-component number of features
+    # models contain (1 - component) number of features
     # ensure the models are not duplicated and non redundant
     index_sort_bank = set()
     model_bank = [ ini_desc for _ in range(bank) for ini_desc in [sorted([random.choice(cluster[random.choice(num_clusters)]) for _ in range(random.randint(1,component))])] if ini_desc not in tuple(index_sort_bank) and not index_sort_bank.add(tuple(ini_desc))]
