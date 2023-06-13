@@ -5,7 +5,7 @@
 """
 Copyright (C) 2023 Stephen Szwiec
 
-This file is part of pyqsarplus. 
+This file is part of pyqsarplus.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ def rm_lowVar(X_data, cutoff=0.9):
     Parameters
     ----------
     X_data : pandas DataFrame , shape = (n_samples, n_features)
-    cutoff : float, default = 0.9
+    cutoff : float, default = 0.1
 
     Returns
     -------
@@ -90,58 +90,9 @@ def rm_nanCorr(X_data):
     -------
     Modified DataFrame
     """
-    corr_mtx = abs(X_data.corr())
-    A = corr_mtx.isnull().sum()
+    corr_mtx = pd.DataFrame(np.corrcoef(X_data, rowvar=False), columns=X_data.columns, index=X_data.columns)
+    A = corr_mtx.isnull().any()
     return X_data.drop(X_data.columns[A], axis=1)
-
-def train_scale(X_data):
-    """
-    Transform features by scaling each feature to a given range
-
-    Parameters
-    ----------
-    X_data : pandas DataFrame , shape = (n_samples, n_features)
-
-    Returns
-    -------
-    X_scaled : pandas DataFrame , shape = (n_samples, n_features)
-    """
-    header = list(X_data.columns.values)
-    scaler = MinMaxScaler()
-    X_scaled = pd.DataFrame(scaler.fit_transform(X_data), columns=header)
-    return X_scaled
-
-def clean_data(X_data, cutoff=None, plot=False):
-    """
-    Perform the entire data cleaning process as one function
-    Optionally, plot the correlation matrix
-
-    Parameters
-    ----------
-    X_data : pandas DataFrame, shape = (n_samples, n_features)
-    cutoff : float, optional, auto-correlaton coefficient below which we keep
-
-    Returns
-    -------
-    Modified DataFrame
-    """
-    # Create a deep copy of the data
-    df = X_data.copy()
-    # Remove columns with constant data
-    df = rm_constant(df)
-    # Remove columns with NaN values
-    df = rm_nan(df)
-    # Remove columns with low variance
-    if cutoff: 
-        df = rm_lowVar(df, cutoff)
-    # Scale the data and return
-    if plot:
-        plt.matshow(df.corr())
-        plt.set_cmap('seismic')
-        # show legend for the matrix
-        plt.colorbar()
-        plt.show()
-    return pd.DataFrame(MinMaxScaler().fit_transform(df), columns=list(df.columns.values))
 
 
 def sorted_split(X_data, y_data, test_size=0.2):
@@ -182,7 +133,7 @@ def random_split(X_data, y_data, test_size=0.2):
     test_size : float, default = 0.2
 
     Returns
-    -------
+    -------give count of NaN in pandas dataframe
     X_train : pandas DataFrame , shape = (n_samples, m_features)
     X_test : pandas DataFrame , shape = (n_samples, m_features)
     y_train : pandas DataFrame , shape = (n_samples, 1)
@@ -197,3 +148,65 @@ def random_split(X_data, y_data, test_size=0.2):
     # return train and test data
     return X_data.loc[train_idx], X_data.loc[test_idx], y_data.loc[train_idx], y_data.loc[test_idx]
 
+def scale_data(X_train, X_test):
+    """
+    Scale the data using the training data; apply the same transformation to the test data
+
+    Parameters
+    ----------
+    X_train : pandas DataFrame , shape = (n_samples, m_features)
+    X_test : pandas DataFrame , shape = (p_samples, m_features)
+
+    Returns
+    -------
+    X_train_scaled : pandas DataFrame , shape = (n_samples, m_features)
+    X_test_scaled : pandas DataFrame , shape = (p_samples, m_features)
+    """
+
+    # scale the data
+    scaler = MinMaxScaler()
+    X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train), columns=list(X_train.columns.values))
+    X_test_scaled = pd.DataFrame(scaler.transform(X_test), columns=list(X_test.columns.values))
+    return X_train_scaled, X_test_scaled
+
+def clean_data(X_data, y_data, split=sorted, cutoff=None, plot=False):
+    """
+    Perform the entire data cleaning process as one function
+    Optionally, plot the correlation matrix
+
+    Parameters
+    ----------
+    X_data : pandas DataFrame, shape = (n_samples, n_features)
+    split : string, optional, 'sorted' or 'random'
+    cutoff : float, optional, auto-correlaton coefficient below which we keep
+    plot : boolean, optional, default = False
+
+    Returns
+    -------
+
+    """
+    # Create a deep copy of the data
+    df = X_data.copy()
+    # Remove columns with constant data
+    df = rm_constant(df)
+    # Remove columns with NaN values
+    df = rm_nan(df)
+    # Remove columns with NaN values when calculating correlation coefficients
+    df = rm_nanCorr(df)
+    # Remove columns with low variance
+    if cutoff:
+        df = rm_lowVar(df, cutoff)
+    # Create split
+    if split == 'random':
+        X_train, X_test, y_train, y_test = random_split(df, y_data)
+    else:
+        X_train, X_test, y_train, y_test = random_split(df, y_data)
+    # Scale the data and return
+    X_train, X_test = scale_data(X_train, X_test)
+    if plot:
+        plt.matshow(df.corr())
+        plt.set_cmap('seismic')
+        # show legend for the matrix
+        plt.colorbar()
+        plt.show()
+    return X_train, X_test, y_train, y_test
