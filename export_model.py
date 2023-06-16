@@ -5,7 +5,7 @@
 """
 Copyright (C) 2023 Stephen Szwiec
 
-This file is part of pyqsarplus. 
+This file is part of pyqsarplus.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -134,7 +134,7 @@ class ModelExport:
         Returns
         -------
         None
-        """     
+        """
         # standard deviation of y
         y_std = np.std(self.y)
         residuals = res = (self.y - self.y_pred)/y_std
@@ -261,7 +261,7 @@ class ModelExport:
         -------
         None
         """
-        def kxy_value(x, y): 
+        def kxy_value(x, y):
             """
             Returns Kxy value for a given covariance matrix
 
@@ -339,7 +339,7 @@ class ModelExport:
         plt.ylabel("P-value")
         plt.xlabel("Features")
         plt.show()
-    
+
     def p_value_table(self):
         """
         P-value table of features
@@ -407,7 +407,7 @@ class ModelExport:
         theta = np.linspace(0, 2*np.pi, num_vars, endpoint=False)
         # close the plot
         class RadarTransform(PolarAxes.PolarTransform):
-            
+
             def transform_path_non_affine(self, path):
                 if path._interpolation_steps > 1:
                     path = path.interpolated(num_vars)
@@ -425,7 +425,7 @@ class ModelExport:
             def fill(self, *args, closed=True, **kwargs):
                 """Override fill so that line is closed by default"""
                 return super().fill(closed=closed, *args, **kwargs)
-            
+
             def plot(self, *args, **kwargs):
                 """Override plot so that line is closed by default"""
                 lines = super().plot(*args, **kwargs)
@@ -469,7 +469,7 @@ class ModelExport:
         register_projection(RadarAxes)
         return theta
 
-    def radar_plot(self): 
+    def radar_plot(self):
         """
         Creates a radar plot of the scoring metrics: r2, q2, rmse, rmse_ext, q2f1, q2f2, q2f3, and ccc
 7
@@ -489,4 +489,3 @@ class ModelExport:
         ax.fill(theta, scores, alpha=0.25)
         ax.set_varlabels(spoke_labels)
         plt.show()
-    
