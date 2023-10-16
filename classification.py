@@ -1,11 +1,11 @@
 #-*- coding: utf-8 -*-
-# Author: Stephen Szwiec 
+# Author: Stephen Szwiec
 # Date: 2023-02-19
 # Description: Classification Scoring Module
 """
 Copyright (C) 2023 Stephen Szwiec
 
-This file is part of pyqsarplus. 
+This file is part of qsarify.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,20 +21,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-
-
 import numpy as np
 from sklearn.metrics import accuracy_score
 class ClassifierScore :
     """
     Provides summary information about Classification
-    
+
     Parameters
     ----------
     y_data : pandas DataFrame , shape = (n_samples,)
     pred_y : pandas DataFrame , shape = (n_samples,)
     => predicted Y values as result of classification
-    
+
     Sub functions
     -------
     score (self)
@@ -45,10 +43,11 @@ class ClassifierScore :
         """
         Initializes the classifer
         """
+        # Initialize the variables
         self.y_data = y_data
         self.pred_y = pred_y
         self.real_y = [] #hash y_data
-
+        # Hash the y_data
         for i in np.array(self.y_data) :
             self.real_y.append(i[0])
 
@@ -59,8 +58,10 @@ class ClassifierScore :
         -------
         None
         """
+        # Initialize the variables
         n = 0
         cnt = 0
+        # Count the number of wrong predictions
         for i in np.array(self.real_y) :
             if i != self.pred_y[n] :
                 cnt += 1
@@ -73,23 +74,25 @@ class ClassifierScore :
         """
         Calculate Precision & Recall
         Generates a confusion matrix
-        
+
         Returns
         -------
         None
         """
+        # Initialize the variables
         one = 0
         zero = 0
         n = 0
         cnt = 0
         realzero = 0
         realone = 0
+        # Initialize the confusion matrix
         for i in np.array(self.y_data) :
             if i[0] == 0 :
                 zero += 1
             if i[0] == 1 :
                 one += 1
-
+        # Count the number of wrong predictions
         for i in np.array(self.y_data):
             if i[0] != self.pred_y[n]:
                 #print ('real',i[0],'///','pred',y_pred[n])
@@ -99,8 +102,7 @@ class ClassifierScore :
                     realone += 1
                 cnt +=1
             n += 1
-
-
+        # Print the results
         print(('Number of 1 :',one))
         print('Number of 0 :',zero)
         print('True Positive(real 1 but pred 1) :',one-realone) #TP
@@ -109,4 +111,3 @@ class ClassifierScore :
         print('False Negative(real 1 but pred 0) :',realone)  #FN
         print('Precision', (one-realone)/((one-realone)+realzero)) # TP / TP+FP
         print('Recall',(one-realone)/((one-realone)+realone)) #  TP / TP+FN
-

@@ -1,1 +1,1 @@
-name = "pyqsarplus"
+name = "qsarify"

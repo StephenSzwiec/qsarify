@@ -5,7 +5,7 @@
 """
 Copyright (C) 2023 Stephen Szwiec
 
-This file is part of pyqsarplus. 
+This file is part of qsarify.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -27,21 +27,65 @@ from pandas import DataFrame, Series
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import pdist, squareform
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster, cophenet
-from sklearn.decomposition import PCA
+from scipy.stats import norm
 
-def cophenetic(X_data):
+def gaussian(x):
+    """
+    Gaussian function for kernel density estimation
+
+    Parameters
+    ----------
+    x : numpy array, shape = (n_samples, )
+
+    Returns
+    -------
+    g : numpy array, shape = (n_samples, )
+    """
+
+
+
+def estimate_entropy(x_vec, k=int(np.sqrt(len(x_vec)))):
+    """
+    Estimate entropy of a vector x_vec from a continuous variable using k-nearest neighbor method
+
+    Parameters
+    ----------
+    x_vec : numpy array, shape = (n_samples, )
+    k : int, number of nearest neighbors, default = sqrt(n_samples)
+
+    Returns
+    -------
+    entropy : float, entropy of x_vec
+    """
+    # Calculate gaussian kernel density estimate of x_vec
+    g = np.array([1/(np.std(x)*np.sqrt(2*np.pi))*np.exp(-0.5*((x[i]-np.mean(x))/np.std(x))**2) for i in len(x)])
+    # Calculate k-nearest neighbor distance
+    n = len(x_vec)
+    x_vec = x_vec.reshape((n, 1))
+    knn = np.sort(np.abs(x_vec - g), axis=0))[k + 1]
+    # Calculate entropy
+    const = np.log(n - 1) - np.log(k) + np.log(2) + np.euler_gamma
+    return const + np.log(d_knn).mean()
+
+def mi(X, Y):
+
+
+
+def cophenetic(X_data, method='pearson'):
     """
     Calculate the cophenetic correlation coefficient of linkages
 
     Parameters
     ----------
-    X_data : pandas DataFrame, shape = (n_samples, n_features)
+    X_data : pandas DataFrame, shape = (n_samples, m_features)
+    method : str, method for linkage generation, default = 'corr' (Pearson correlation), 'info' (Shannon mutual information)
 
     Returns
     -------
     None
     """
     distance = abs(np.corrcoef(X_data, rowvar=False))
+
     # drop any columns and rows that produced NaNs
     distance = distance[~np.isnan(distance).any(axis=1)]
     distance = distance[:, ~np.isnan(distance).any(axis=0)]
@@ -63,7 +107,7 @@ class featureCluster:
     Parameters
     ----------
     X_data : pandas DataFrame, shape = (n_samples, n_features)
-    link : str, kind of linkage method, default = 'average'
+    link : str, kind of linkage method, default = 'average', 'complete', 'single'
     cut_d : int, depth in cluster(dendrogram), default = 3
 
     Sub functions
@@ -71,8 +115,8 @@ class featureCluster:
     set_cluster(self)
     cluster_dist(self)
     """
-   
-    def __init__(self, X_data, link='average', cut_d=3):
+
+    def __init__(self, X_data, method='corr', link='average', cut_d=3):
         """
         Initializes cluster object:
         Makes a cluster of features based on hierarchical clustering method
@@ -85,12 +129,16 @@ class featureCluster:
         cut_d : int, depth in cluster(dendrogram), default = 3
                 This is a tunable parameter for clustering
         """
+        self.method = method
         self.cluster_info = []
         self.assignments = np.array([])
         self.cluster_output = DataFrame()
         self.cludict = {}
         self.X_data = X_data
-        self.xcorr = pd.DataFrame(abs(np.corrcoef(self.X_data, rowvar=False)), columns=X_data.columns, index=X_data.columns)
+        if method == 'info':
+            self.xcorr = pd.DataFrame(mutual_information(X_data), columns=X_data.columns, index=X_data.columns)
+        else:
+            self.xcorr = pd.DataFrame(abs(np.corrcoef(self.X_data, rowvar=False)), columns=X_data.columns, index=X_data.columns)
         self.link = link
         self.cut_d = cut_d
 
@@ -120,7 +168,7 @@ class featureCluster:
             self.cluster_info.append( [k for k, v in self.cludict.items() if v == t] )
             if verbose:
                 print('\n','\x1b[1;46m'+'Cluster'+'\x1b[0m',t,self.cluster_info[t-1],)
-        if graph:    
+        if graph:
             plt.figure(figsize=(25, 40))
             plt.title('Hierarchical Clustering Dendrogram')
             plt.xlabel('sample index')
@@ -137,7 +185,7 @@ class featureCluster:
         -------
         None
         """
-        
+
         # have we actually clustered? If not, please do so first:
         if self.assignments.any() == False:
             self.set_cluster()
@@ -148,7 +196,8 @@ class featureCluster:
         dist_box = [ (np.array([self.xcorr.loc[i,i]]).sum() - len(i)/2)/(len(i)**2 - len(i)/2) for i in cluster if len(i) > 1]
         plt.hist(dist_box)
         plt.ylabel("Frequency")
-        plt.xlabel("Correlation coefficient of each cluster")
+        if self.method == 'info':
+            plt.xlabel("Shannon mutual information of each cluster")
+        else:
+            plt.xlabel("Correlation coefficient of each cluster")
         plt.show()
-
-  

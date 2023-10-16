@@ -5,7 +5,7 @@
 """
 Copyright (C) 2023 Stephen Szwiec
 
-This file is part of pyqsarplus.
+This file is part of qsarify
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -169,7 +169,7 @@ def scale_data(X_train, X_test):
     X_test_scaled = pd.DataFrame(scaler.transform(X_test), columns=list(X_test.columns.values))
     return X_train_scaled, X_test_scaled
 
-def clean_data(X_data, y_data, split=sorted, cutoff=None, plot=False):
+def clean_data(X_data, y_data, split='sorted', test_size=0.2, cutoff=None, plot=False):
     """
     Perform the entire data cleaning process as one function
     Optionally, plot the correlation matrix
@@ -178,11 +178,17 @@ def clean_data(X_data, y_data, split=sorted, cutoff=None, plot=False):
     ----------
     X_data : pandas DataFrame, shape = (n_samples, n_features)
     split : string, optional, 'sorted' or 'random'
+    test_size : float, optional, default = 0.2
     cutoff : float, optional, auto-correlaton coefficient below which we keep
     plot : boolean, optional, default = False
 
     Returns
     -------
+    X_train : pandas DataFrame , shape = (n_samples, m_features)
+    X_test : pandas DataFrame , shape = (p_samples, m_features)
+    y_train : pandas DataFrame , shape = (n_samples, 1)
+    y_test : pandas DataFrame , shape = (p_samples, 1)
+
 
     """
     # Create a deep copy of the data
@@ -198,9 +204,9 @@ def clean_data(X_data, y_data, split=sorted, cutoff=None, plot=False):
         df = rm_lowVar(df, cutoff)
     # Create split
     if split == 'random':
-        X_train, X_test, y_train, y_test = random_split(df, y_data)
+        X_train, X_test, y_train, y_test = random_split(df, y_data, test_size)
     else:
-        X_train, X_test, y_train, y_test = random_split(df, y_data)
+        X_train, X_test, y_train, y_test = sorted_split(df, y_data, test_size)
     # Scale the data and return
     X_train, X_test = scale_data(X_train, X_test)
     if plot:
