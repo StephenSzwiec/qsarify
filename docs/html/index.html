@@ -1,244 +1,177 @@
 <!DOCTYPE html>
-<html lang="en">
-		<head>
-	<meta name="generator" content="Hugo 0.119.0">
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<!-- google analytics  tag (gtag.js)-->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=GA-"></script>
-		<script>
-		  window.dataLayer = window.dataLayer || [];
-		  function gtag(){dataLayer.push(arguments);}
-		  gtag('js', new Date());
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-		  gtag('config', 'GA-');
-		</script>
-		<title>qsarify</title>
-		<link href="https://fonts.googleapis.com/css?family=Hind+Vadodara:400,700|Mukta:500,700" rel="stylesheet">
-		<link rel="stylesheet" type="text/css" href="/css/style.css">
-		<script src="https://unpkg.com/scrollreveal@4.0.0/dist/scrollreveal.min.js"></script>
-	</head>
-	<body class="is-boxed has-animations">
-		<div class="body-wrap boxed-container">
-				<header class="site-header">
-			<div class="container">
-				<div class="site-header-inner">
-					<div class="brand header-brand">
-						<h1 class="m-0">
-							<a href="#">
-								<svg width="48" height="32" viewBox="0 0 48 32" xmlns="http://www.w3.org/2000/svg">
-									<title>qsarify</title>
-									<defs>
-										<linearGradient x1="0%" y1="100%" y2="0%" id="logo-a">
-											<stop stop-color="#007CFE" stop-opacity="0" offset="0%"/>
-											<stop stop-color="#007DFF" offset="100%"/>
-										</linearGradient>
-										<linearGradient x1="100%" y1="50%" x2="0%" y2="50%" id="logo-b">
-											<stop stop-color="#FF4F7A" stop-opacity="0" offset="0%"/>
-											<stop stop-color="#FF4F7A" offset="100%"/>
-										</linearGradient>
-									</defs>
-									<g fill="none" fill-rule="evenodd">
-										<rect fill="url(#logo-a)" width="32" height="32" rx="16"/>
-										<rect fill="url(#logo-b)" x="16" width="32" height="32" rx="16"/>
-									</g>
-								</svg>
-							</a>
-						</h1>
-					</div>
-				</div>
-			</div>
-		</header>
-			<main>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to qsarify’s documentation! &mdash; qsarify 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=2709fde1"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="qsarify package" href="qsarify.html" /> 
+</head>
 
-			<section class="hero">
-				<div class="container">
-					<div class="hero-inner">
-						<div class="hero-copy">
-							<h1 class="hero-title h2-mobile mt-0 is-revealing">qsarify</h1>
-							<p class="hero-paragraph is-revealing">A high performance library for QSAR model development</p>
-							<p class="hero-cta is-revealing"><a class="button button-primary button-shadow" href="https://github.com/StephenSzwiec/qsarify">View on Github</a></p>
-							<p class="hero-cta is-revealing"><a class="button button-primary button-shadow" href="https://github.com/StephenSzwiec/qsarify/blob/dev/example/qsarify_example.ipynb">View Tutorial</a></p>
-							<p class="hero-cta is-revealing"><a class="button button-primary button-shadow" href="https://stephenszwiec.github.io/qsarify/man">Read the Docs</a></p>
-						</div>
-						<div class="hero-illustration is-revealing">
-							<svg width="528" height="413" viewBox="0 0 528 413" xmlns="http://www.w3.org/2000/svg">
-							<defs>
-								<linearGradient x1="50%" y1="100%" x2="50%" y2="0%" id="hero-illustration-a">
-									<stop stop-color="#A7FDE8" stop-opacity="0" offset="0%"/>
-									<stop stop-color="#6EFACC" offset="100%"/>
-								</linearGradient>
-								<linearGradient x1="100%" y1="50%" x2="0%" y2="50%" id="hero-illustration-b">
-									<stop stop-color="#FF4F7A" stop-opacity="0" offset="0%"/>
-									<stop stop-color="#FF4F7A" offset="100%"/>
-								</linearGradient>
-								<radialGradient fx="50%" fy="50%" r="100%" id="hero-illustration-c">
-									<stop stop-color="#6EFACC" offset="0%"/>
-									<stop stop-color="#6EFACC" stop-opacity="0" offset="100%"/>
-								</radialGradient>
-								<linearGradient x1="0%" y1="100%" y2="0%" id="hero-illustration-d">
-									<stop stop-color="#007CFE" stop-opacity="0" offset="0%"/>
-									<stop stop-color="#007DFF" offset="100%"/>
-								</linearGradient>
-								<linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="hero-illustration-e">
-									<stop stop-color="#FF4F7A" stop-opacity="0" offset="0%"/>
-									<stop stop-color="#FF4F7A" offset="100%"/>
-								</linearGradient>
-								<filter x="-500%" y="-500%" width="1000%" height="1000%" filterUnits="objectBoundingBox" id="dropshadow-1">
-									<feOffset dy="16" in="SourceAlpha" result="shadowOffsetOuter"/>
-									<feGaussianBlur stdDeviation="24" in="shadowOffsetOuter" result="shadowBlurOuter"/>
-									<feColorMatrix values="0 0 0 0 0.12 0 0 0 0 0.17 0 0 0 0 0.21 0 0 0 0.2 0" in="shadowBlurOuter"/>
-								</filter>
-							</defs>
-							<g transform="translate(0 -1)" fill="none" fill-rule="evenodd">
-								<g transform="translate(128 290)" fill="url(#hero-illustration-a)">
-									<path d="M62.225 0l1.415 1.414L1.414 63.64 0 62.225zM66.468 4.243l1.414 1.414L5.657 67.882l-1.414-1.414zM70.71 8.485L72.126 9.9 9.899 72.125 8.485 70.71zM74.953 12.728l1.415 1.414-62.226 62.226-1.414-1.415zM79.196 16.97l1.414 1.415L18.385 80.61l-1.414-1.414zM83.439 21.213l1.414 1.414-62.226 62.226-1.414-1.414zM87.681 25.456l1.414 1.414L26.87 89.095l-1.414-1.414zM91.924 29.698l1.414 1.415-62.225 62.225-1.415-1.414z"/>
-									<path d="M91.924 29.698l1.414 1.415-62.225 62.225-1.415-1.414zM96.167 33.941l1.414 1.414-62.226 62.226-1.414-1.414zM100.41 38.184l1.413 1.414-62.225 62.225-1.414-1.414zM104.652 42.426l1.414 1.415-62.225 62.225-1.415-1.414zM108.894 46.669l1.415 1.414-62.226 62.226-1.414-1.415zM113.137 50.912l1.414 1.414-62.225 62.225-1.414-1.414zM117.38 55.154l1.414 1.415-62.225 62.225-1.415-1.414zM121.622 59.397l1.415 1.414-62.226 62.226-1.414-1.415z"/>
-									<g>
-										<path d="M100.811 0l-1.414 1.414 62.225 62.226 1.415-1.415zM96.569 4.243l-1.415 1.414 62.226 62.225 1.414-1.414zM92.326 8.485L90.912 9.9l62.225 62.226 1.414-1.414zM88.083 12.728l-1.414 1.414 62.225 62.226 1.415-1.415zM83.84 16.97l-1.414 1.415 62.226 62.225 1.414-1.414zM79.598 21.213l-1.414 1.414 62.225 62.226 1.414-1.414zM75.355 25.456l-1.414 1.414 62.226 62.225 1.414-1.414zM71.113 29.698l-1.415 1.415 62.226 62.225 1.414-1.414z"/>
-										<path d="M71.113 29.698l-1.415 1.415 62.226 62.225 1.414-1.414zM66.87 33.941l-1.414 1.414 62.225 62.226 1.414-1.414zM62.627 38.184l-1.414 1.414 62.226 62.225 1.414-1.414zM58.385 42.426l-1.414 1.415 62.225 62.225 1.414-1.414zM54.142 46.669l-1.414 1.414 62.225 62.226 1.415-1.415zM49.9 50.912l-1.415 1.414 62.226 62.225 1.414-1.414zM45.657 55.154l-1.414 1.415 62.225 62.225 1.414-1.414zM41.414 59.397L40 60.811l62.225 62.226 1.415-1.415z"/>
-									</g>
-								</g>
-								<g transform="matrix(1 0 0 -1 326 124)" fill="url(#hero-illustration-a)">
-									<path d="M62.225 0l1.415 1.414L1.414 63.64 0 62.225zM66.468 4.243l1.414 1.414L5.657 67.882l-1.414-1.414zM70.71 8.485L72.126 9.9 9.899 72.125 8.485 70.71zM74.953 12.728l1.415 1.414-62.226 62.226-1.414-1.415zM79.196 16.97l1.414 1.415L18.385 80.61l-1.414-1.414zM83.439 21.213l1.414 1.414-62.226 62.226-1.414-1.414zM87.681 25.456l1.414 1.414L26.87 89.095l-1.414-1.414zM91.924 29.698l1.414 1.415-62.225 62.225-1.415-1.414z"/>
-									<path d="M91.924 29.698l1.414 1.415-62.225 62.225-1.415-1.414zM96.167 33.941l1.414 1.414-62.226 62.226-1.414-1.414zM100.41 38.184l1.413 1.414-62.225 62.225-1.414-1.414zM104.652 42.426l1.414 1.415-62.225 62.225-1.415-1.414zM108.894 46.669l1.415 1.414-62.226 62.226-1.414-1.415zM113.137 50.912l1.414 1.414-62.225 62.225-1.414-1.414zM117.38 55.154l1.414 1.415-62.225 62.225-1.415-1.414zM121.622 59.397l1.415 1.414-62.226 62.226-1.414-1.415z"/>
-									<g>
-										<path d="M100.811 0l-1.414 1.414 62.225 62.226 1.415-1.415zM96.569 4.243l-1.415 1.414 62.226 62.225 1.414-1.414zM92.326 8.485L90.912 9.9l62.225 62.226 1.414-1.414zM88.083 12.728l-1.414 1.414 62.225 62.226 1.415-1.415zM83.84 16.97l-1.414 1.415 62.226 62.225 1.414-1.414zM79.598 21.213l-1.414 1.414 62.225 62.226 1.414-1.414zM75.355 25.456l-1.414 1.414 62.226 62.225 1.414-1.414zM71.113 29.698l-1.415 1.415 62.226 62.225 1.414-1.414z"/>
-										<path d="M71.113 29.698l-1.415 1.415 62.226 62.225 1.414-1.414zM66.87 33.941l-1.414 1.414 62.225 62.226 1.414-1.414zM62.627 38.184l-1.414 1.414 62.226 62.225 1.414-1.414zM58.385 42.426l-1.414 1.415 62.225 62.225 1.414-1.414zM54.142 46.669l-1.414 1.414 62.225 62.226 1.415-1.415zM49.9 50.912l-1.415 1.414 62.226 62.225 1.414-1.414zM45.657 55.154l-1.414 1.415 62.225 62.225 1.414-1.414zM41.414 59.397L40 60.811l62.225 62.226 1.415-1.415z"/>
-									</g>
-								</g>
-								<path d="M0 0h528v414H0z"/>
-								<path fill="#FFF" d="M0 63h528v297H0z" style="mix-blend-mode:multiply;filter:url(#dropshadow-1)"/>
-								<path fill="#FFF" d="M0 63h528v297H0z"/>
-								<path fill="url(#hero-illustration-b)" d="M408 230h80v48h-80z"/>
-								<path d="M0 0h4v4H0V0zm0 12h4v4H0v-4zm0 12h4v4H0v-4zm0 12h4v4H0v-4zm0 12h4v4H0v-4zm0 12h4v4H0v-4zM12 0h4v4h-4V0zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zM24 0h4v4h-4V0zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zM36 0h4v4h-4V0zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zM48 0h4v4h-4V0zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zM60 0h4v4h-4V0zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4zm0 12h4v4h-4v-4z" transform="rotate(45 -118.861 431.981)" fill="url(#hero-illustration-c)"/>
-								<path fill="#FFF" d="M288 254h160v160H288z" style="mix-blend-mode:multiply;filter:url(#dropshadow-1)"/>
-								<path fill="#FFF" d="M288 254h160v160H288z"/>
-								<path d="M248 79h88v24c0 35.346-28.654 64-64 64h-24V79z" fill="url(#hero-illustration-d)"/>
-								<path d="M348 132c0 26.51-21.49 48-48 48 0-26.51 21.49-48 48-48z" fill="url(#hero-illustration-e)" transform="matrix(1 0 0 -1 0 312)"/>
-								<path fill="#FFF" d="M200 31h88v88h-88z" style="mix-blend-mode:multiply;filter:url(#dropshadow-1)"/>
-								<path fill="#FFF" d="M200 31h88v88h-88z"/>
-								<path fill="#F6F8FA" d="M24 248l88 88H24z"/>
-								<rect fill="url(#hero-illustration-d)" x="335" y="242" width="32" height="32" rx="16"/>
-							</g>
-						</svg>
-						</div>
-					</div>
-				</div>
-			</section>
-			<section class="features section text-center">
-				<div class="section-square"></div>
-				<div class="container">
-					<div class="features-inner section-inner">
-                        <div class="features-wrap">
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
 
-                            <div class="feature is-revealing">
-                                <div class="feature-inner">
-                                    <div class="feature-icon">
-                                        <img src="images/feature-1.png">
-                                    </div>
-                                    <h4 class="feature-title h3-mobile">Easily Clean Data</h4>
-                                    <p class="text-sm">One function to perform data pre-processing</p>
-                                </div>
-                            </div>
+          
+          
+          <a href="#" class="icon icon-home">
+            qsarify
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.html">qsarify package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.data_tools.html">qsarify.data_tools module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.clustering.html">qsarify.clustering module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.feature_selection_single.html">qsarify.feature_selection_single module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.feature_selection_multi.html">qsarify.feature_selection_multi module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.export_model.html">qsarify.export_model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.cross_validation.html">qsarify.cross_validation module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.qsar_scoring.html">qsarify.qsar_scoring module</a></li>
+</ul>
 
-                            <div class="feature is-revealing">
-                                <div class="feature-inner">
-                                    <div class="feature-icon">
-                                        <img src="images/feature-2.png">
-                                    </div>
-                                    <h4 class="feature-title h3-mobile">Powerful Model Development</h4>
-                                    <p class="text-sm">Reduce the time it takes to develop a QSAR model using intelligent feature selection</p>
-                                </div>
-                            </div>
+        </div>
+      </div>
+    </nav>
 
-                            <div class="feature is-revealing">
-                                <div class="feature-inner">
-                                    <div class="feature-icon">
-                                        <img src="images/feature-3.png">
-                                    </div>
-                                    <h4 class="feature-title h3-mobile">Simple Model Validation</h4>
-                                    <p class="text-sm">Built-in functions for model validation and visualzation</p>
-                                </div>
-                            </div>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">qsarify</a>
+      </nav>
 
-                        </div>
-                    </div>
-				</div>
-			</section>
-                        </div>
-                    </div>
-				</div>
-			</section>
-
-			</main>
-						<footer class="site-footer text-light">
-					<div class="container">
-						<div class="site-footer-inner has-top-divider">
-							<div class="brand footer-brand">
-								<a href="#">
-									<svg width="48" height="32" viewBox="0 0 48 32" xmlns="http://www.w3.org/2000/svg">
-										<title>qsarify</title>
-										<defs>
-											<linearGradient x1="0%" y1="100%" y2="0%" id="logo-footer-a">
-												<stop stop-color="#007CFE" stop-opacity="0" offset="0%"/>
-												<stop stop-color="#007DFF" offset="100%"/>
-											</linearGradient>
-											<linearGradient x1="100%" y1="50%" x2="0%" y2="50%" id="logo-footer-b">
-												<stop stop-color="#FF4F7A" stop-opacity="0" offset="0%"/>
-												<stop stop-color="#FF4F7A" offset="100%"/>
-											</linearGradient>
-										</defs>
-										<g fill="none" fill-rule="evenodd">
-											<rect fill="url(#logo-footer-a)" width="32" height="32" rx="16"/>
-											<rect fill="url(#logo-footer-b)" x="16" width="32" height="32" rx="16"/>
-										</g>
-									</svg>
-								</a>
-							</div>
-												<ul class="footer-links list-reset">
-
-						<li>
-							<a class="nav-link" href="#">
-
-							Contact
-							</a>
-						</li>
-
-						<li>
-							<a class="nav-link" href="#">
-
-							About us
-							</a>
-						</li>
-
-						<li>
-							<a class="nav-link" href="#">
-
-							FAQ's
-							</a>
-						</li>
-
-						<li>
-							<a class="nav-link" href="#">
-
-							Support
-							</a>
-						</li>
-
-					</ul>
-												<ul class="footer-social-links list-reset">
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Welcome to qsarify’s documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-qsarify-s-documentation">
+<h1>Welcome to qsarify’s documentation!<a class="headerlink" href="#welcome-to-qsarify-s-documentation" title="Link to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.html">qsarify package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.html#submodules">Submodules</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.html#module-qsarify">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.data_tools.html">qsarify.data_tools module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.data_tools.html#qsarify.data_tools.clean_data"><code class="docutils literal notranslate"><span class="pre">clean_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.data_tools.html#qsarify.data_tools.random_split"><code class="docutils literal notranslate"><span class="pre">random_split()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.data_tools.html#qsarify.data_tools.rm_constant"><code class="docutils literal notranslate"><span class="pre">rm_constant()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.data_tools.html#qsarify.data_tools.rm_lowVar"><code class="docutils literal notranslate"><span class="pre">rm_lowVar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.data_tools.html#qsarify.data_tools.rm_nan"><code class="docutils literal notranslate"><span class="pre">rm_nan()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.data_tools.html#qsarify.data_tools.rm_nanCorr"><code class="docutils literal notranslate"><span class="pre">rm_nanCorr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.data_tools.html#qsarify.data_tools.scale_data"><code class="docutils literal notranslate"><span class="pre">scale_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.data_tools.html#qsarify.data_tools.sorted_split"><code class="docutils literal notranslate"><span class="pre">sorted_split()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.clustering.html">qsarify.clustering module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.clustering.html#qsarify.clustering.cophenetic"><code class="docutils literal notranslate"><span class="pre">cophenetic()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.clustering.html#qsarify.clustering.featureCluster"><code class="docutils literal notranslate"><span class="pre">featureCluster</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="qsarify.clustering.html#qsarify.clustering.featureCluster.cluster_dist"><code class="docutils literal notranslate"><span class="pre">featureCluster.cluster_dist()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="qsarify.clustering.html#qsarify.clustering.featureCluster.set_cluster"><code class="docutils literal notranslate"><span class="pre">featureCluster.set_cluster()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.feature_selection_single.html">qsarify.feature_selection_single module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.feature_selection_single.html#qsarify.feature_selection_single.mlr_selection"><code class="docutils literal notranslate"><span class="pre">mlr_selection()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.feature_selection_single.html#qsarify.feature_selection_single.rf_selection"><code class="docutils literal notranslate"><span class="pre">rf_selection()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.feature_selection_multi.html">qsarify.feature_selection_multi module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.feature_selection_multi.html#qsarify.feature_selection_multi.Evolution"><code class="docutils literal notranslate"><span class="pre">Evolution</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="qsarify.feature_selection_multi.html#qsarify.feature_selection_multi.Evolution.evolve"><code class="docutils literal notranslate"><span class="pre">Evolution.evolve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.feature_selection_multi.html#qsarify.feature_selection_multi.selection"><code class="docutils literal notranslate"><span class="pre">selection()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.export_model.html">qsarify.export_model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.cross_validation.html">qsarify.cross_validation module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qsarify.qsar_scoring.html">qsarify.qsar_scoring module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.qsar_scoring.html#qsarify.qsar_scoring.ccc_score"><code class="docutils literal notranslate"><span class="pre">ccc_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.qsar_scoring.html#qsarify.qsar_scoring.q2_score"><code class="docutils literal notranslate"><span class="pre">q2_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.qsar_scoring.html#qsarify.qsar_scoring.q2f3_score"><code class="docutils literal notranslate"><span class="pre">q2f3_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.qsar_scoring.html#qsarify.qsar_scoring.q2f_score"><code class="docutils literal notranslate"><span class="pre">q2f_score()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="qsarify.qsar_scoring.html#qsarify.qsar_scoring.rmse_score"><code class="docutils literal notranslate"><span class="pre">rmse_score()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
 
 
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="qsarify.html" class="btn btn-neutral float-right" title="qsarify package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
-					</ul>
+  <hr/>
 
-							<div class="footer-copyright">&copy; 2023 Stephen Szwiec, all rights reserved</div>
-						</div>
-					</div>
-				</footer>
-		</div>
-		 <script src="/js/main.min.js"></script>
-	</body>
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Stephen Szwiec.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
 </html>
