@@ -1,6 +1,6 @@
 # qsarify
 
-qsarify is a library of tools for the analysis of QSAR/QSPR datasets and models. This library is intended to be used to produce models which relate an X set of calculated chemical descriptors to a given numeric endpoint. Many great tools will take the geometry or string data of a given chemical and compute **descriptors** which are numeric measures of the properties of these, but you can generate some of these with another one of my scripts, [Free Descriptors](https://github.com/StephenSzwiec/free_descriptors).
+qsarify is a library of tools for the analysis of QSAR/QSPR datasets and models. This library is intended to be used to produce models which relate an X set of calculated chemical descriptors to a given numeric endpoint. Many great tools will take the geometry or string data of a given chemical and compute **descriptors**, which are numeric measures of the properties of these, but you can generate some of these with another one of my scripts, [Free Descriptors](https://github.com/StephenSzwiec/free_descriptors).
 
 # Installation
 --------------
