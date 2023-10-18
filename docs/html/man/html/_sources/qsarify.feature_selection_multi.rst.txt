@@ -1,0 +1,7 @@
+qsarify.feature\_selection\_multi module
+========================================
+
+.. automodule:: qsarify.feature_selection_multi
+   :members:
+   :undoc-members:
+   :show-inheritance:

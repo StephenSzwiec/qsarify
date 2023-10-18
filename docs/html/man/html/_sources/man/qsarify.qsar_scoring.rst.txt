@@ -1,0 +1,7 @@
+qsarify.qsar\_scoring module
+============================
+
+.. automodule:: qsarify.qsar_scoring
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+qsarify.clustering module
+=========================
+
+.. automodule:: qsarify.clustering
+   :members:
+   :undoc-members:
+   :show-inheritance:

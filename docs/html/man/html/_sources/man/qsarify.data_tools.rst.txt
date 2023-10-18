@@ -1,0 +1,7 @@
+qsarify.data\_tools module
+==========================
+
+.. automodule:: qsarify.data_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:

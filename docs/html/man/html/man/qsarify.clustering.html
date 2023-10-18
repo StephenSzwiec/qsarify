@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qsarify.clustering module &mdash; qsarify 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=2709fde1"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            qsarify
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">qsarify.clustering module</a><ul>
+<li><a class="reference internal" href="#qsarify.clustering.cophenetic"><code class="docutils literal notranslate"><span class="pre">cophenetic()</span></code></a></li>
+<li><a class="reference internal" href="#qsarify.clustering.featureCluster"><code class="docutils literal notranslate"><span class="pre">featureCluster</span></code></a><ul>
+<li><a class="reference internal" href="#qsarify.clustering.featureCluster.cluster_dist"><code class="docutils literal notranslate"><span class="pre">featureCluster.cluster_dist()</span></code></a></li>
+<li><a class="reference internal" href="#qsarify.clustering.featureCluster.set_cluster"><code class="docutils literal notranslate"><span class="pre">featureCluster.set_cluster()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">qsarify</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">qsarify.clustering module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/man/qsarify.clustering.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-qsarify.clustering">
+<span id="qsarify-clustering-module"></span><h1>qsarify.clustering module<a class="headerlink" href="#module-qsarify.clustering" title="Link to this heading"></a></h1>
+<p>Clustering Module</p>
+<p>This module contains functions for clustering features based on hierarchical clustering method
+and calculating the cophenetic correlation coefficient of linkages. The cophenetic correlation
+coefficient is a measure of the correlation between the distance of observations in feature space
+and the distance of observations in cluster space. The cophenetic correlation coefficient is
+calculated for each linkage method and the method with the highest cophenetic correlation
+coefficient is used to cluster the features. The cophenetic correlation coefficient is calculated
+using the scipy.cluster.hierarchy.cophenet function.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="qsarify.clustering.cophenetic">
+<span class="sig-prename descclassname"><span class="pre">qsarify.clustering.</span></span><span class="sig-name descname"><span class="pre">cophenetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/clustering.html#cophenetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.clustering.cophenetic" title="Link to this definition"></a></dt>
+<dd><p>Calculate the cophenetic correlation coefficient of linkages</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_data</strong> (<em>pandas DataFrame</em><em>, </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>m_features</em><em>)</em>) – </p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>method for linkage generation</em><em>, </em><em>default = 'corr'</em><em> (</em><em>Pearson correlation</em><em>)</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="qsarify.clustering.featureCluster">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qsarify.clustering.</span></span><span class="sig-name descname"><span class="pre">featureCluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'corr'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">link</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'average'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut_d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/clustering.html#featureCluster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.clustering.featureCluster" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Make cluster of features based on hierarchical clustering method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_data</strong> (<em>pandas DataFrame</em><em>, </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – </p></li>
+<li><p><strong>link</strong> (<em>str</em><em>, </em><em>kind</em><em> of </em><em>linkage method</em><em>, </em><em>default = 'average'</em><em>, </em><em>'complete'</em><em>, </em><em>'single'</em>) – </p></li>
+<li><p><strong>cut_d</strong> (<em>int</em><em>, </em><em>depth in cluster</em><em>(</em><em>dendrogram</em><em>)</em><em>, </em><em>default = 3</em>) – </p></li>
+<li><p><strong>functions</strong> (<em>Sub</em>) – </p></li>
+<li><p><strong>-------------</strong> – </p></li>
+<li><p><strong>set_cluster</strong><strong>(</strong><strong>self</strong><strong>)</strong> – </p></li>
+<li><p><strong>cluster_dist</strong><strong>(</strong><strong>self</strong><strong>)</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qsarify.clustering.featureCluster.cluster_dist">
+<span class="sig-name descname"><span class="pre">cluster_dist</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/clustering.html#featureCluster.cluster_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.clustering.featureCluster.cluster_dist" title="Link to this definition"></a></dt>
+<dd><p>Show dendrogram of hierarchical clustering</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qsarify.clustering.featureCluster.set_cluster">
+<span class="sig-name descname"><span class="pre">set_cluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/clustering.html#featureCluster.set_cluster"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.clustering.featureCluster.set_cluster" title="Link to this definition"></a></dt>
+<dd><p>Make cluster of features based on hierarchical clustering method</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>print cluster information</em><em>, </em><em>default = False</em>) – </p></li>
+<li><p><strong>graph</strong> (<em>bool</em><em>, </em><em>show dendrogram</em><em>, </em><em>default = False</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>cludict</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict, cluster information of features as a dictionary</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Stephen Szwiec.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
