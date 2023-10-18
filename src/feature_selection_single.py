@@ -5,7 +5,7 @@
 """
 Copyright (C) 2023 Stephen Szwiec
 
-This file is part of pyqsarplus. 
+This file is part of qsarify.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,12 +26,7 @@ import random
 import numpy as np
 import pandas as pd
 import sklearn.linear_model as lm
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 import itertools
-
-from kernel_methods import kernel_weighted_polynomial_regressor
-
 
 def mlr_selection(X_data, y_data, cluster_info, component, model="regression", learning=50000, bank=200, interval=1000):
     """
@@ -43,7 +38,7 @@ def mlr_selection(X_data, y_data, cluster_info, component, model="regression", l
     X_data: DataFrame, descriptor data
     y_data: DataFrame, target data
     cluster_info: dict, descriptor cluster information
-    component: int, number of features to select 
+    component: int, number of features to select
     model: str, learning algorithm to use, default = "regression"
     learning: int, number of iterations to perform, default = 50000
     bank: int, number of models to keep in the bank, default = 200
@@ -54,7 +49,7 @@ def mlr_selection(X_data, y_data, cluster_info, component, model="regression", l
     best_model: list, best model found
     best_score: float, best score found
     """
-    
+
     now = datetime.datetime.now()
     print("Start time: ", now.strftime('%H:%M:%S'))
 
@@ -139,7 +134,7 @@ def rf_selection(X_data, y_data, cluster_info, component, model="regression", le
     X_data: DataFrame, descriptor data
     y_data: DataFrame, target data
     cluster_info: dict, descriptor cluster information
-    component: int, number of features to select 
+    component: int, number of features to select
     model: str, learning algorithm to use, default = "regression"
     learning: int, number of iterations to perform, default = 50000
     bank: int, number of models to keep in the bank, default = 200
@@ -150,7 +145,7 @@ def rf_selection(X_data, y_data, cluster_info, component, model="regression", le
     best_model: list, best model found
     best_score: float, best score found
     """
-    
+
     now = datetime.datetime.now()
     print("Start time: ", now.strftime('%H:%M:%S'))
 
@@ -215,7 +210,7 @@ def rf_selection(X_data, y_data, cluster_info, component, model="regression", le
         if n % interval == 0 and n != 0:
             tt = datetime.datetime.now()
             print(n, '=>', tt.strftime('%H:%M:%S'), scoring_bank[0])
-        
+
     # print output and return best model found during training
     print("Best score: ", scoring_bank[0][0])
     clulog = [cluster_info[y] for y in scoring_bank[0][1]]

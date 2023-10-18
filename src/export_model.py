@@ -5,7 +5,7 @@
 """
 Copyright (C) 2023 Stephen Szwiec
 
-This file is part of pyqsarplus. 
+This file is part of qsarify.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ class ModelExport:
 
     def scores(self, verbose=False):
         """
-        Return scoring metrics for the model
+        Print scoring metrics for the model
 
         Parameters
         ----------
@@ -108,7 +108,7 @@ class ModelExport:
 
         Returns
         -------
-        dict of scoring metrics
+        None
         """
         scores = {}
         scores["RMSE"] = np.sqrt(mean_squared_error(self.y, self.y_pred))
@@ -117,12 +117,11 @@ class ModelExport:
         scores["Q2"] = q2_score(self.ey, self.ey_pred)
         if verbose:
             scores["Q2F1"] = q2f_score(self.ey, self.ey_pred, np.mean(self.y))
-            scores["Q2F2"] = q2f_score(self.ey, self.ey_pred, np.median(self.ey))
+            scores["Q2F2"] = q2f_score(self.ey, self.ey_pred, np.mean(self.ey))
             scores["Q2F3"] = q2f3_score(self.ey, self.ey_pred, len(self.y), len(self.ey))
             scores["CCC"] = ccc_score(np.append(self.y, self.ey), np.append(self.y_pred, self.ey_pred))
         for key, value in scores.items():
                 print(key, ":", value)
-        return scores
 
 
     def williams_plot(self):
@@ -134,7 +133,7 @@ class ModelExport:
         Returns
         -------
         None
-        """     
+        """
         # standard deviation of y
         y_std = np.std(self.y)
         residuals = res = (self.y - self.y_pred)/y_std
@@ -159,10 +158,10 @@ class ModelExport:
         plt.ylabel("Std. Residuals")
         plt.xlabel(F"Hat Values (h*={hii:.2f})")
         plt.ylim([-3.5,3.5])
-        plt.scatter(leverage_in,res,color=['lightblue'])
-        plt.scatter(leverage_ex,residuals_ex,color=['orange'])
+        plt.scatter(leverage_in,res,color=['lightblue'], label="Training Data")
+        plt.scatter(leverage_ex,residuals_ex,color=['orange'], label="Test Data")
         plt.plot()
-        plt.legend(["Applicability Domain", "Training Data", "Test Data"], loc="upper right")
+        plt.legend(loc="upper right")
         plt.show()
 
     def mlr(self):
@@ -245,7 +244,7 @@ class ModelExport:
             plt.errorbar(self.y, self.y_pred, yerr=self.y_pred_std, fmt='o', color='lightblue', ecolor='lightgray', elinewidth=3, capsize=0)
             plt.errorbar(self.ey, self.ey_pred, yerr=self.ey_pred_std, fmt='o', color='orange', ecolor='lightgray', elinewidth=3, capsize=0)
         plt.plot([self.y.min() , self.y.max()] , [[self.y.min()],[self.y.max()]],"black" )
-        plt.legend(["Ideal", "Training Data", "Test Data"], loc="upper left")
+        plt.legend(["Training Data", "Test Data", "Predicted"], loc="upper left")
         plt.show()
 
 
@@ -261,7 +260,7 @@ class ModelExport:
         -------
         None
         """
-        def kxy_value(x, y): 
+        def kxy_value(x, y):
             """
             Returns Kxy value for a given covariance matrix
 
@@ -339,7 +338,7 @@ class ModelExport:
         plt.ylabel("P-value")
         plt.xlabel("Features")
         plt.show()
-    
+
     def p_value_table(self):
         """
         P-value table of features
@@ -390,103 +389,3 @@ class ModelExport:
         """
         feature_importance = self.feature_importance()
         return DataFrame(feature_importance, index=self.feature_set, columns=['feature importance'])
-
-    def __radar_factory__(num_vars, frame='polygon'):
-        """
-        Create a radar chart with `num_vars` axes.
-
-        Credit: https://matplotlib.org/stable/gallery/specialty_plots/radar_chart.html
-
-        Parameters
-        ----------
-        num_vars : int, number of variables for radar chart
-        frame : str, shape of frame for radar chart, defaults to 'circle'
-
-        """
-
-        theta = np.linspace(0, 2*np.pi, num_vars, endpoint=False)
-        # close the plot
-        class RadarTransform(PolarAxes.PolarTransform):
-            
-            def transform_path_non_affine(self, path):
-                if path._interpolation_steps > 1:
-                    path = path.interpolated(num_vars)
-                return Path(self.transform(path.vertices), path.codes)
-
-        class RadarAxes(PolarAxes):
-            name = 'radar'
-            PolarTransform = RadarTransform
-
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                # rotate plot such that the first axis is at the top
-                self.set_theta_zero_location('N')
-
-            def fill(self, *args, closed=True, **kwargs):
-                """Override fill so that line is closed by default"""
-                return super().fill(closed=closed, *args, **kwargs)
-            
-            def plot(self, *args, **kwargs):
-                """Override plot so that line is closed by default"""
-                lines = super().plot(*args, **kwargs)
-                for line in lines:
-                    self._close_line(line)
-
-            def _close_line(self, line):
-                x, y = line.get_data()
-                if x[0] != x[-1]:
-                    x = np.concatenate((x, [x[0]]))
-                    y = np.concatenate((y, [y[0]]))
-                    line.set_data(x, y)
-
-            def set_varlabels(self, labels):
-                self.set_thetagrids(np.degrees(theta), labels)
-
-            def _gen_axes_patch(self):
-                # The Axes patch must be centered at (0.5, 0.5) and of radius
-                # 0.5 in axes coordinates.
-                if frame == 'circle':
-                    return Circle((0.5, 0.5), 0.5)
-                elif frame == 'polygon':
-                    return RegularPolygon((0.5, 0.5), num_vars,
-                                          radius=.5, edgecolor="k")
-                else:
-                    raise ValueError("unknown value for 'frame': %s" % frame)
-
-            def _gen_axes_spines(self):
-                if frame == 'circle':
-                    return super()._gen_axes_spines()
-                elif frame == 'polygon':
-                    # spine_type must be 'left'/'right'/'top'/'bottom'/'circle'.
-                    spine = Spine(axes=self,
-                                  spine_type='circle',
-                                  path=Circle((0.5, 0.5), 0.5))
-                    spine.set_transform(self.transAxes)
-                    return {'polar': spine}
-                else:
-                    raise ValueError("unknown value for 'frame': %s" % frame)
-
-        register_projection(RadarAxes)
-        return theta
-
-    def radar_plot(self): 
-        """
-        Creates a radar plot of the scoring metrics: r2, q2, rmse, rmse_ext, q2f1, q2f2, q2f3, and ccc
-7
-        Returns
-        -------
-        None
-        """
-        n = 8
-        theta = self.__radar_factory__(n)
-        scores = self.scores(verbose=True).values.tolist()
-        spoke_labels = ['r2', 'q2', 'rmse', 'rmse_ext', 'q2f1', 'q2f2', 'q2f3', 'ccc']
-        fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(projection='radar'))
-        fig.subplots_adjust(top=0.85, bottom=0.05)
-        ax.set_rgrids([0.2, 0.4, 0.6, 0.8, 1.0])
-        ax.set_title('Scoring Metrics', weight='bold', size='medium', position=(0.5, 1.1), horizontalalignment='center', verticalalignment='center')
-        ax.plot(theta, scores)
-        ax.fill(theta, scores, alpha=0.25)
-        ax.set_varlabels(spoke_labels)
-        plt.show()
-    

@@ -5,7 +5,7 @@
 """
 Copyright (C) 2023 Stephen Szwiec
 
-This file is part of qsarify
+This file is part of qsarify.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -44,8 +44,6 @@ def rm_nan(X_data):
     A = X_data.isnull().any()
     # delete the features with 'NaN' as value
     return X_data.drop(X_data.columns[A], axis=1)
-
-
 
 def rm_constant(X_data):
     """

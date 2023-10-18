@@ -5,7 +5,7 @@
 """
 Copyright (C) 2023 Stephen Szwiec
 
-This file is part of pyqsarplus. 
+This file is part of qsarify.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -91,9 +91,9 @@ def selection(X_data, y_data, cluster_info, model="regression", learning=500000,
     learning : default=500000, number of overall models to be trained
     bank : default=200, number of models to be trained in each iteration
     component : default=4, number of features to be selected
-    interval : optional, default=1000, print current scoring and selected features 
+    interval : optional, default=1000, print current scoring and selected features
                every interval
-    cores: optional, default=(mp.cpu_count()*2)-1, number of processes to be used 
+    cores: optional, default=(mp.cpu_count()*2)-1, number of processes to be used
            for multiprocessing; default is twice the number of cores minus 1, which
            is assuming you have SMT, HT, or something similar) If you have a large
            number of cores, you may want to set this to a lower number to avoid

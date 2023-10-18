@@ -5,7 +5,7 @@
 """
 Copyright (C) 2023 Stephen Szwiec
 
-This file is part of pyqsarplus. 
+This file is part of qsarify.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -60,15 +60,14 @@ def q2_score(y_true, y_pred):
 
 def q2f_score(y_true, y_pred, y_mean):
     """
-    Calculates the Q2_f1 or Q2_f2 score 
+    Calculates the Q2_f1 or Q2_f2 score
     depending on whether the mean is calculated from the training set or the external set
 
     Parameters
     ----------
     y_true : numpy array, shape (n_samples,)
     y_pred : numpy array, shape (n_samples,)
-    y_mean : float
-        mean of the training set
+    y_mean : float, mean of the training (for q2f1) or test (for q2f2) set
 
     Returns
     -------
@@ -96,7 +95,6 @@ def q2f3_score(y_true, y_pred, n_train, n_external):
     float
     """
     press = np.sum(np.square(y_true - y_pred))
-    # create a sum of the squared differences between the true values and mean value, using a map function
     tss = np.sum(np.square(y_true - np.mean(y_true)))
     return 1 - (press / n_external) / (tss * n_train)
 

@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 import numpy as np
 from sklearn.metrics import accuracy_score
+
 class ClassifierScore :
     """
     Provides summary information about Classification
