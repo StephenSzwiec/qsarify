@@ -1,0 +1,25 @@
+qsarify package
+===============
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   qsarify.classification
+   qsarify.clustering
+   qsarify.cross_validation
+   qsarify.data_tools
+   qsarify.export_model
+   qsarify.feature_selection_multi
+   qsarify.feature_selection_single
+   qsarify.qsar_scoring
+
+Module contents
+---------------
+
+.. automodule:: qsarify
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qsarify.feature_selection_multi &mdash; qsarify 0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            qsarify
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">qsarify</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qsarify.feature_selection_multi</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qsarify.feature_selection_multi</h1><div class="highlight"><pre>
+<span></span><span class="c1">#-*- coding: utf-8 -*-</span>
+<span class="c1"># Author: Stephen Szwiec</span>
+<span class="c1"># Date: 2023-02-19</span>
+<span class="c1"># Description: Multi-Processing Feature Selection Module</span>
+<span class="c1">#</span>
+<span class="c1">#Copyright (C) 2023 Stephen Szwiec</span>
+<span class="c1">#</span>
+<span class="c1">#This file is part of qsarify.</span>
+<span class="c1">#</span>
+<span class="c1">#This program is free software: you can redistribute it and/or modify</span>
+<span class="c1">#it under the terms of the GNU General Public License as published by</span>
+<span class="c1">#the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1">#(at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1">#This program is distributed in the hope that it will be useful,</span>
+<span class="c1">#but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1">#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c1">#GNU General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1">#You should have received a copy of the GNU General Public License</span>
+<span class="c1">#along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Multi-Processing Feature Selection Module</span>
+
+<span class="sd">This module contains the functions for performing feature selection using</span>
+<span class="sd">the clustering module&#39;s output as a guide for feature selection, and implements</span>
+<span class="sd">a genetic algorithm for feature selection using reflection.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">linear_model</span> <span class="k">as</span> <span class="n">lm</span>
+<span class="kn">from</span> <span class="nn">sklearn.svm</span> <span class="kn">import</span> <span class="n">SVC</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span> <span class="k">as</span> <span class="nn">mp</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Reflector class for the evolve function; allows for the use of a pool of workers.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Evolution">
+<a class="viewcode-back" href="../../man/qsarify.feature_selection_multi.html#qsarify.feature_selection_multi.Evolution">[docs]</a>
+<span class="k">class</span> <span class="nc">Evolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initializes the evolution class with the learning algorithm to be used</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">evolve</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_mlr</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">LinearRegression</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evolve</span> <span class="o">=</span> <span class="n">evolve</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function call for the evolution function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">cluster_info</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">X_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evolve</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">cluster_info</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">X_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_mlr</span><span class="p">)</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evolution of descriptors for learning algorithm, implemented as a function map</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    i: list, descriptor set</span>
+<span class="sd">    cluster_info: dict, descriptor cluster information</span>
+<span class="sd">    cluster: list, descriptor cluster</span>
+<span class="sd">    X_data: DataFrame, descriptor data</span>
+<span class="sd">    y_data: DataFrame, target data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="Evolution.evolve">
+<a class="viewcode-back" href="../../man/qsarify.feature_selection_multi.html#qsarify.feature_selection_multi.Evolution.evolve">[docs]</a>
+    <span class="k">def</span> <span class="nf">evolve</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">cluster_info</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">X_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">e_mlr</span><span class="p">):</span>
+        <span class="c1"># Get the descriptors in the model</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># Get the groups of descriptors in model</span>
+        <span class="n">group_n</span> <span class="o">=</span> <span class="p">[</span><span class="n">cluster_info</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">i</span><span class="p">]</span>
+        <span class="c1"># randomly select one descriptor to remove</span>
+        <span class="n">sw_index</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="c1"># randomly select new group from cluster to swap with</span>
+        <span class="n">sw_group</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cluster_info</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
+        <span class="k">while</span> <span class="n">sw_group</span> <span class="ow">in</span> <span class="n">group_n</span><span class="p">:</span>
+            <span class="c1"># make sure the new group is not in the current group</span>
+            <span class="n">sw_group</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cluster</span><span class="p">))</span>
+        <span class="c1"># list comprehension which generates a new list of descriptors by</span>
+        <span class="c1"># swapping the indexed descriptor with a new one randomly chosen from the new cluster group</span>
+        <span class="n">b_set</span> <span class="o">=</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">cluster</span><span class="p">[</span><span class="n">sw_group</span><span class="p">])</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="n">sw_index</span> <span class="k">else</span> <span class="n">i</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">))]</span>
+        <span class="n">b_set</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">X_data</span><span class="p">[</span><span class="n">b_set</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y_data</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">score</span> <span class="o">=</span> <span class="n">e_mlr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">score</span><span class="p">,</span> <span class="n">b_set</span><span class="p">]</span></div>
+</div>
+
+
+<div class="viewcode-block" id="selection">
+<a class="viewcode-back" href="../../man/qsarify.feature_selection_multi.html#qsarify.feature_selection_multi.selection">[docs]</a>
+<span class="k">def</span> <span class="nf">selection</span><span class="p">(</span><span class="n">X_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">,</span> <span class="n">cluster_info</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">&quot;regression&quot;</span><span class="p">,</span> <span class="n">learning</span><span class="o">=</span><span class="mi">500000</span><span class="p">,</span> <span class="n">bank</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">cores</span><span class="o">=</span><span class="p">(</span><span class="n">mp</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Forward feature selection using cophenetically correlated data on mutliple cores</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X_data : pandas DataFrame , shape = (n_samples, n_features)</span>
+<span class="sd">    y_data : pandas DataFrame , shape = (n_samples,)</span>
+<span class="sd">    cluster_info : dictionary returned by clustering.featureCluster.set_cluster()</span>
+<span class="sd">    model : default=&quot;regression&quot;, otherwise &quot;classification&quot;</span>
+<span class="sd">    learning : default=500000, number of overall models to be trained</span>
+<span class="sd">    bank : default=200, number of models to be trained in each iteration</span>
+<span class="sd">    component : default=4, number of features to be selected</span>
+<span class="sd">    interval : optional, default=1000, print current scoring and selected features</span>
+<span class="sd">               every interval</span>
+<span class="sd">    cores: optional, default=(mp.cpu_count()*2)-1, number of processes to be used</span>
+<span class="sd">           for multiprocessing; default is twice the number of cores minus 1, which</span>
+<span class="sd">           is assuming you have SMT, HT, or something similar) If you have a large</span>
+<span class="sd">           number of cores, you may want to set this to a lower number to avoid</span>
+<span class="sd">           memory issues.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list, result of selected best feature set</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Start time: &quot;</span><span class="p">,</span> <span class="n">now</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">&quot;regression&quot;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\x1b</span><span class="s1">[1;42m&#39;</span><span class="p">,</span><span class="s1">&#39;Regression&#39;</span><span class="p">,</span><span class="s1">&#39;</span><span class="se">\x1b</span><span class="s1">[0m&#39;</span><span class="p">)</span>
+        <span class="n">y_mlr</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">LinearRegression</span><span class="p">()</span>
+        <span class="n">e_mlr</span> <span class="o">=</span> <span class="n">lm</span><span class="o">.</span><span class="n">LinearRegression</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\x1b</span><span class="s1">[1;42m&#39;</span><span class="p">,</span><span class="s1">&#39;Classification&#39;</span><span class="p">,</span><span class="s1">&#39;</span><span class="se">\x1b</span><span class="s1">[0m&#39;</span><span class="p">)</span>
+        <span class="n">y_mlr</span> <span class="o">=</span> <span class="n">SVC</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;rbf&#39;</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">e_mlr</span> <span class="o">=</span> <span class="n">SVC</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;rbf&#39;</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># a list of numbered clusters</span>
+    <span class="n">nc</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cluster_info</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="n">num_clusters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">nc</span><span class="p">)))</span>
+
+    <span class="c1"># extract information from dictionary by inversion</span>
+    <span class="n">inv_cluster_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">cluster_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">inv_cluster_info</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">())</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+    <span class="c1"># an ordered list of features in each cluster</span>
+    <span class="n">cluster</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">inv_cluster_info</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="c1"># fill the interation bank with random models</span>
+    <span class="c1"># models contain (1 - component) number of features</span>
+    <span class="c1"># ensure the models are not duplicated and non redundant</span>
+    <span class="n">index_sort_bank</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">model_bank</span> <span class="o">=</span> <span class="p">[</span> <span class="n">ini_desc</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bank</span><span class="p">)</span> <span class="k">for</span> <span class="n">ini_desc</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">sorted</span><span class="p">([</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">cluster</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">num_clusters</span><span class="p">)])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">component</span><span class="p">))])]</span> <span class="k">if</span> <span class="n">ini_desc</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">index_sort_bank</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">index_sort_bank</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">ini_desc</span><span class="p">))]</span>
+
+    <span class="c1"># score each set of features, saving each score and the corresponding feature set</span>
+    <span class="n">scoring_bank</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">[</span><span class="n">y_mlr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">x</span><span class="p">]),</span> <span class="n">y_data</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">x</span><span class="p">]),</span> <span class="n">y_data</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">X_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)],</span> <span class="n">model_bank</span><span class="p">))</span>
+
+    <span class="c1"># create a reflection of the evolution function</span>
+    <span class="n">evolver</span> <span class="o">=</span> <span class="n">Evolution</span><span class="p">(</span><span class="n">Evolution</span><span class="o">.</span><span class="n">evolve</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">mp</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span> <span class="o">=</span> <span class="n">cores</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+        <span class="c1"># perform main learning loop</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">learning</span><span class="p">):</span>
+            <span class="c1"># initialize best score to the worst possible score</span>
+            <span class="n">best_score</span> <span class="o">=</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+            <span class="c1"># Evolve the bank of models and allow those surpassing the best score to replace the worst models up to the bank size</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">starmap</span><span class="p">(</span><span class="n">evolver</span><span class="p">,</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">cluster_info</span><span class="p">,</span> <span class="n">cluster</span><span class="p">,</span> <span class="n">X_data</span><span class="p">,</span> <span class="n">y_data</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">scoring_bank</span><span class="p">])</span>
+            <span class="n">rank_filter</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="p">(</span><span class="n">best_score</span> <span class="o">:=</span> <span class="nb">max</span><span class="p">(</span><span class="n">best_score</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">==</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="n">scoring_bank</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">scoring_bank</span><span class="p">,</span> <span class="n">rank_filter</span><span class="p">),</span> <span class="n">reverse</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)[:</span><span class="n">bank</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="n">interval</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">tt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;=&gt;&#39;</span><span class="p">,</span> <span class="n">tt</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">),</span> <span class="n">scoring_bank</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+    <span class="c1"># print output and return best model found during training</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Best score: &quot;</span><span class="p">,</span> <span class="n">scoring_bank</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">clulog</span> <span class="o">=</span> <span class="p">[</span><span class="n">cluster_info</span><span class="p">[</span><span class="n">y</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">scoring_bank</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model&#39;s cluster info&quot;</span><span class="p">,</span> <span class="n">clulog</span><span class="p">)</span>
+    <span class="n">fi</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">fiTime</span> <span class="o">=</span> <span class="n">fi</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Finish Time : &quot;</span><span class="p">,</span> <span class="n">fiTime</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">scoring_bank</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Stephen Szwiec.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

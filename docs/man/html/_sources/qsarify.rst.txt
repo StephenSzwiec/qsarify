@@ -1,0 +1,18 @@
+qsarify package
+===============
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   qsarify
+
+Module contents
+---------------
+
+.. automodule:: qsarify
+   :members:
+   :undoc-members:
+   :show-inheritance:

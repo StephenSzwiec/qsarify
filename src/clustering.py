@@ -2,25 +2,39 @@
 # Author: Stephen Szwiec
 # Date: 2023-02-19
 # Description: Clustering Module
+#
+#Copyright (C) 2023 Stephen Szwiec
+#
+#This file is part of qsarify.
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+
 """
-Copyright (C) 2023 Stephen Szwiec
+Clustering Module
 
-This file is part of qsarify.
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+This module contains functions for clustering features based on hierarchical clustering method
+and calculating the cophenetic correlation coefficient of linkages. The cophenetic correlation
+coefficient is a measure of the correlation between the distance of observations in feature space
+and the distance of observations in cluster space. The cophenetic correlation coefficient is
+calculated for each linkage method and the method with the highest cophenetic correlation
+coefficient is used to cluster the features. The cophenetic correlation coefficient is calculated
+using the scipy.cluster.hierarchy.cophenet function.
 
 """
+
 import numpy as np
 import pandas as pd
 from pandas import DataFrame, Series

@@ -1,0 +1,7 @@
+qsarify.cross\_validation module
+================================
+
+.. automodule:: qsarify.cross_validation
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qsarify.data_tools module &mdash; qsarify 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=2709fde1"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            qsarify
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">qsarify.data_tools module</a><ul>
+<li><a class="reference internal" href="#qsarify.data_tools.clean_data"><code class="docutils literal notranslate"><span class="pre">clean_data()</span></code></a></li>
+<li><a class="reference internal" href="#qsarify.data_tools.random_split"><code class="docutils literal notranslate"><span class="pre">random_split()</span></code></a></li>
+<li><a class="reference internal" href="#qsarify.data_tools.rm_constant"><code class="docutils literal notranslate"><span class="pre">rm_constant()</span></code></a></li>
+<li><a class="reference internal" href="#qsarify.data_tools.rm_lowVar"><code class="docutils literal notranslate"><span class="pre">rm_lowVar()</span></code></a></li>
+<li><a class="reference internal" href="#qsarify.data_tools.rm_nan"><code class="docutils literal notranslate"><span class="pre">rm_nan()</span></code></a></li>
+<li><a class="reference internal" href="#qsarify.data_tools.rm_nanCorr"><code class="docutils literal notranslate"><span class="pre">rm_nanCorr()</span></code></a></li>
+<li><a class="reference internal" href="#qsarify.data_tools.scale_data"><code class="docutils literal notranslate"><span class="pre">scale_data()</span></code></a></li>
+<li><a class="reference internal" href="#qsarify.data_tools.sorted_split"><code class="docutils literal notranslate"><span class="pre">sorted_split()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">qsarify</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">qsarify.data_tools module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/man/qsarify.data_tools.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-qsarify.data_tools">
+<span id="qsarify-data-tools-module"></span><h1>qsarify.data_tools module<a class="headerlink" href="#module-qsarify.data_tools" title="Link to this heading"></a></h1>
+<p>Data Preprocessing Module</p>
+<dl class="simple">
+<dt>This module contains functions for data preprocessing, including:</dt><dd><ul class="simple">
+<li><p>removing features with ‘NaN’ as value</p></li>
+<li><p>removing features with constant values</p></li>
+<li><p>removing features with low variance</p></li>
+<li><p>removing features with ‘NaN’ as value when calculating correlation coefficients</p></li>
+<li><p>generating a sequential train-test split by sorting the data by response variable</p></li>
+<li><p>generating a random train-test split</p></li>
+<li><p>scaling data</p></li>
+</ul>
+</dd>
+</dl>
+<p>The main function of this module is <cite>clean_data</cite>, which performs all of the above functions.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="qsarify.data_tools.clean_data">
+<span class="sig-prename descclassname"><span class="pre">qsarify.data_tools.</span></span><span class="sig-name descname"><span class="pre">clean_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sorted'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/data_tools.html#clean_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.data_tools.clean_data" title="Link to this definition"></a></dt>
+<dd><p>Perform the entire data cleaning process as one function
+Optionally, plot the correlation matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_data</strong> (<em>pandas DataFrame</em><em>, </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – </p></li>
+<li><p><strong>split</strong> (<em>string</em><em>, </em><em>optional</em><em>, </em><em>'sorted'</em><em> or </em><em>'random'</em>) – </p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>optional</em><em>, </em><em>default = 0.2</em>) – </p></li>
+<li><p><strong>cutoff</strong> (<em>float</em><em>, </em><em>optional</em><em>, </em><em>auto-correlaton coefficient below which we keep</em>) – </p></li>
+<li><p><strong>plot</strong> (<em>boolean</em><em>, </em><em>optional</em><em>, </em><em>default = False</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>X_train</strong> (<em>pandas DataFrame , shape = (n_samples, m_features)</em>)</p></li>
+<li><p><strong>X_test</strong> (<em>pandas DataFrame , shape = (p_samples, m_features)</em>)</p></li>
+<li><p><strong>y_train</strong> (<em>pandas DataFrame , shape = (n_samples, 1)</em>)</p></li>
+<li><p><strong>y_test</strong> (<em>pandas DataFrame , shape = (p_samples, 1)</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qsarify.data_tools.random_split">
+<span class="sig-prename descclassname"><span class="pre">qsarify.data_tools.</span></span><span class="sig-name descname"><span class="pre">random_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/data_tools.html#random_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.data_tools.random_split" title="Link to this definition"></a></dt>
+<dd><p>Generate a random train-test split</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_data</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>m_features</em><em>)</em>) – </p></li>
+<li><p><strong>y_data</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>1</em><em>)</em>) – </p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>default = 0.2</em>) – </p></li>
+<li><p><strong>Returns</strong> – </p></li>
+<li><p><strong>dataframe</strong> (<em>-------give count</em><em> of </em><em>NaN in pandas</em>) – </p></li>
+<li><p><strong>X_train</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>m_features</em><em>)</em>) – </p></li>
+<li><p><strong>X_test</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>m_features</em><em>)</em>) – </p></li>
+<li><p><strong>y_train</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>1</em><em>)</em>) – </p></li>
+<li><p><strong>y_test</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>1</em><em>)</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qsarify.data_tools.rm_constant">
+<span class="sig-prename descclassname"><span class="pre">qsarify.data_tools.</span></span><span class="sig-name descname"><span class="pre">rm_constant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/data_tools.html#rm_constant"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.data_tools.rm_constant" title="Link to this definition"></a></dt>
+<dd><p>Remove features with constant values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X_data</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Modified DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qsarify.data_tools.rm_lowVar">
+<span class="sig-prename descclassname"><span class="pre">qsarify.data_tools.</span></span><span class="sig-name descname"><span class="pre">rm_lowVar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/data_tools.html#rm_lowVar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.data_tools.rm_lowVar" title="Link to this definition"></a></dt>
+<dd><p>Remove features with low variance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_data</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – </p></li>
+<li><p><strong>cutoff</strong> (<em>float</em><em>, </em><em>default = 0.1</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Modified DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qsarify.data_tools.rm_nan">
+<span class="sig-prename descclassname"><span class="pre">qsarify.data_tools.</span></span><span class="sig-name descname"><span class="pre">rm_nan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/data_tools.html#rm_nan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.data_tools.rm_nan" title="Link to this definition"></a></dt>
+<dd><p>Remove features with ‘NaN’ as value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X_data</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Modified DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qsarify.data_tools.rm_nanCorr">
+<span class="sig-prename descclassname"><span class="pre">qsarify.data_tools.</span></span><span class="sig-name descname"><span class="pre">rm_nanCorr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/data_tools.html#rm_nanCorr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.data_tools.rm_nanCorr" title="Link to this definition"></a></dt>
+<dd><p>Remove features with ‘NaN’ as value when calculating correlation coefficients</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X_data</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – </p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Modified DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qsarify.data_tools.scale_data">
+<span class="sig-prename descclassname"><span class="pre">qsarify.data_tools.</span></span><span class="sig-name descname"><span class="pre">scale_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_train</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_test</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/data_tools.html#scale_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.data_tools.scale_data" title="Link to this definition"></a></dt>
+<dd><p>Scale the data using the training data; apply the same transformation to the test data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_train</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>m_features</em><em>)</em>) – </p></li>
+<li><p><strong>X_test</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>p_samples</em><em>, </em><em>m_features</em><em>)</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>X_train_scaled</strong> (<em>pandas DataFrame , shape = (n_samples, m_features)</em>)</p></li>
+<li><p><strong>X_test_scaled</strong> (<em>pandas DataFrame , shape = (p_samples, m_features)</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qsarify.data_tools.sorted_split">
+<span class="sig-prename descclassname"><span class="pre">qsarify.data_tools.</span></span><span class="sig-name descname"><span class="pre">sorted_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qsarify/data_tools.html#sorted_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qsarify.data_tools.sorted_split" title="Link to this definition"></a></dt>
+<dd><p>Generate a sequential train-test split by sorting the data by response variable</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_data</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>m_features</em><em>)</em>) – </p></li>
+<li><p><strong>y_data</strong> (<em>pandas DataFrame</em><em> , </em><em>shape =</em><em> (</em><em>n_samples</em><em>, </em><em>1</em><em>)</em>) – </p></li>
+<li><p><strong>test_size</strong> (<em>float</em><em>, </em><em>default = 0.2</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>X_train</strong> (<em>pandas DataFrame , shape = (n_samples, m_features)</em>)</p></li>
+<li><p><strong>X_test</strong> (<em>pandas DataFrame, shape = (n_samples, m_features)</em>)</p></li>
+<li><p><strong>y_train</strong> (<em>pandas DataFrame , shape = (n_samples, 1)</em>)</p></li>
+<li><p><strong>y_test</strong> (<em>pandas DataFrame , shape = (n_samples, 1)</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Stephen Szwiec.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

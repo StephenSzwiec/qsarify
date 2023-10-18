@@ -1,0 +1,7 @@
+qsarify.export\_model module
+============================
+
+.. automodule:: qsarify.export_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
