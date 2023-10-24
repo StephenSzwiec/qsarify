@@ -43,7 +43,7 @@ from matplotlib.projections import register_projection
 from matplotlib.spines import Spine
 from matplotlib.path import Path
 from matplotlib.patches import Circle, RegularPolygon
-from qsar_scoring import q2_score, q2f_score, q2f3_score, ccc_score
+from qsarify.qsar_scoring import q2_score, q2f_score, q2f3_score, ccc_score
 
 class ModelExport:
     """

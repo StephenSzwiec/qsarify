@@ -36,7 +36,7 @@ from sklearn.model_selection import LeaveOneOut
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
-from qsar_scoring import q2_score, q2f_score, q2f3_score, ccc_score
+from qsarify.qsar_scoring import q2_score, q2f_score, q2f3_score, ccc_score
 
 class cross_validation:
 
