@@ -20,7 +20,7 @@ jobs:
       - name: Install the project 
         run: uv sync --locked --all-extras --dev 
       - name: Lint code 
-        run: uv run black /src /tests 
+        run: uv run black src/ tests/ 
       - name: Check types 
         run: uv run mypy src/
       - name: Run tests
