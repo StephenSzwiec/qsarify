@@ -1,7 +1,0 @@
-qsarify.classification module
-=============================
-
-.. automodule:: qsarify.classification
-   :members:
-   :undoc-members:
-   :show-inheritance:
