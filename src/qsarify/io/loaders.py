@@ -10,22 +10,20 @@ from qsarify.exceptions import DataImportError
 
 def load_csv_dataset(
     file_path: str,
-    description_column_name: Optional[str] = None,
-    response_column_name: Optional[str] = None,
-
-    ) -> Tuple[pd.DataFrame, pd.Series]:
+    id_column: Optional[str] = None,
+    response_column: Optional[str] = None,
+) -> Tuple[pd.DataFrame, pd.Series]:
     """
     Loads a dataset from a CSV file.
 
     The function expects the CSV to have a specific structure:
-    - An optional column for row descriptions (if specified). 
     - A series of numeric columns representing the descriptors (X variables).
     - Optionally specify which column is the response variable (Y values), otherwise, it is assumed to be the last column.
 
     Args:
         file_path: The absolute path to the CSV file.
-        description_column_name: Optional name of the column containing row descriptions.
-        response_column_name: Optional name of the column containing the response variable (Y values).
+        id_column: Optional name of the column containing row descriptions.
+        response_column: Optional name of the column containing the response variable (Y values).
 
     Returns:
         A tuple containing:
@@ -38,54 +36,37 @@ def load_csv_dataset(
                          descriptor or response columns.
     """
     try:
-        df = pd.read_csv(file_path, index_col=False)
-    except FileNotFoundError:
-        raise DataImportError(f"The file was not found at: {file_path}")
-    except pd.errors.EmptyDataError:
-        raise DataImportError(f"The file is empty: {file_path}")
+        df = pd.read_csv(file_path)
+    except Exception as e:
+        raise DataImportError(f"Failed to load CSV file: {e}")
 
-    if df.shape[1] < 2:
-        raise DataImportError(
-            "The dataset must have at least two columns (one descriptor and one response)."
-        )
+    if df.empty or df.shape[1] < 2:
+        raise DataImportError("CSV file is empty or contains fewer than two columns.")
 
-    # Identify the response column
-    if response_column_name:
-        if response_column_name not in df.columns:
-            raise DataImportError(f"Response column '{response_column_name}' not found in the dataset.")
-        y_series = df[response_column_name]
-        temp_df = df.drop(columns=[response_column_name])
+    if id_column and id_column not in df.columns:
+        raise DataImportError(f"Specified ID column '{id_column}' not found in CSV.")
+
+    if response_column:
+        if response_column not in df.columns:
+            raise DataImportError(f"Specified response column '{response_column}' not found in CSV.")
+        y_series = df[response_column]
+        X_df = df.drop(columns=[response_column])
     else:
         y_series = df.iloc[:, -1]
-        temp_df = df.iloc[:, :-1]
+        X_df = df.iloc[:, :-1]
 
-    # Identify IDs and X_df
-    if description_column_name:
-        if description_column_name not in temp_df.columns:
-            raise DataImportError(f"Description column '{description_column_name}' not found in the dataset.")
-        ids_series = temp_df[description_column_name]
-        X_df = temp_df.drop(columns=[description_column_name]) 
+    if id_column:
+        X_df.index = df[id_column]
+        X_df = X_df.drop(columns=[id_column], errors='ignore')
     else:
-        ids_series = pd.Series(range(len(temp_df)), name='ID')
-        X_df = temp_df
-    X_df.columns = [f"Descriptor_{i+1}" for i in range(X_df.shape[1])]
+        X_df.index = pd.RangeIndex(start=1, stop=X_df.shape[0]+1, step=1)
 
-    # Validate data types
+    
+    # Check that all X and y values are numeric
+    if not all(X_df.dtypes.apply(pd.api.types.is_numeric_dtype)):
+        raise DataImportError("Non-numeric data found in descriptor columns")
+
     if not pd.api.types.is_numeric_dtype(y_series):
-        raise DataImportError("The response variable (last column) must be numeric.")
-
-    # Validate data types
-    if not pd.api.types.is_numeric_dtype(y_series):
-        raise DataImportError("The response variable (last column) must be numeric.")
-
-    non_numeric_descriptors = ~X_df.apply(pd.api.types.is_numeric_dtype)
-
-    print(f"[DEBUG] X_df dtypes: {X_df.dtypes}")
-    print(f"[DEBUG] non_numeric_descriptors: {non_numeric_descriptors}")
-    if non_numeric_descriptors.any():
-        bad_cols = X_df.columns[non_numeric_descriptors].tolist()
-        raise DataImportError(
-            f"All descriptor columns must be numeric. Found non-numeric data in: {bad_cols}"
-        )
+        raise DataImportError("Response column contains non-numeric data")
 
     return X_df, y_series

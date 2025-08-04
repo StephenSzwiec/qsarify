@@ -6,72 +6,37 @@ variance and correlation, helping to reduce dimensionality and improve model per
 """
 import pandas as pd
 import numpy as np
-from typing import Tuple
 
-def remove_near_zero_variance(
-    X: pd.DataFrame,
-    threshold: float = 0.01,
-) -> pd.DataFrame:
+def rm_lowVar(df: pd.DataFrame, threshold: float = 0.1) -> pd.DataFrame:
     """
-    Removes columns from a DataFrame that have near-zero variance.
+    Remove columns with low variance from the DataFrame.
 
-    Columns with variance below the specified threshold are considered
-    near-zero variance and are removed. This helps in removing features
-    that provide little to no information to the model.
-
-    Args:
-        X: The input DataFrame of descriptor variables.
-        threshold: The variance threshold below which columns will be removed.
-                   A common value is 0.01, meaning if 99% of the values are the same.
+    Parameters:
+    df (pd.DataFrame): Input DataFrame with descriptor columns.
+    threshold (float): Variance threshold below which columns will be removed.
 
     Returns:
-        A new DataFrame with near-zero variance columns removed.
+    pd.DataFrame: DataFrame with low variance columns removed.
     """
-    variances = X.var()
-    cols_to_keep = variances[variances >= threshold].index
-    return X[cols_to_keep]
+    return df.drop(df.columns[df.var() <= threshold], axis=1)
 
-def remove_highly_correlated_columns(
-    X: pd.DataFrame,
-    threshold: float = 0.95,
-) -> Tuple[pd.DataFrame, list]:
+def rm_highCorr(df: pd.DataFrame, threshold: float = 0.9) -> pd.DataFrame:
     """
-    Removes one column from each pair of highly correlated columns from a DataFrame.
+    Remove highly correlated columns from the DataFrame.
 
-    This function calculates the Pearson correlation matrix and identifies pairs of
-    columns with a correlation coefficient (absolute value) above the specified
-    threshold. For each such pair, one of the columns (specifically, the second
-    column encountered in the iteration) is marked for removal. This helps in
-    reducing multicollinearity and improving model stability while retaining
-    at least one representative from highly correlated groups.
-
-    Args:
-        X: The input DataFrame of descriptor variables.
-        threshold: The absolute Pearson correlation coefficient threshold.
-                   If the absolute correlation between two columns is above
-                   this threshold, one of them will be removed.
+    Parameters:
+    df (pd.DataFrame): Input DataFrame with descriptor columns.
+    threshold (float): Correlation threshold above which one of the correlated columns will be removed.
 
     Returns:
-        A tuple containing:
-        - A new DataFrame with highly correlated columns removed.
-        - A list of column names that were removed.
+    pd.DataFrame: DataFrame with highly correlated columns removed.
     """
-    corr_matrix = X.corr().abs()
-    print(f"[DEBUG] Correlation Matrix:\n{corr_matrix}")
-    # Select upper triangle of correlation matrix
-    upper_tri = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-    print(f"[DEBUG] Upper Triangle Matrix:\n{upper_tri}")
-
-    # Find features with correlation greater than threshold and mark one for removal
+    corr_matrix = df.corr().abs()
+    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
     to_drop = []
     cols = corr_matrix.columns
     for i in range(len(cols)):
-        for j in range(i + 1, len(cols)):
-            if corr_matrix.iloc[i, j] > threshold:
-                to_drop.append(cols[j])
-    print(f"[DEBUG] Columns to drop: {to_drop}")
-
-    # Drop features 
-    X_filtered = X.drop(columns=to_drop)
-
-    return X_filtered, to_drop
+        for j in range(i+1, len(cols)):
+            if upper.iloc[i, j] > threshold:
+                to_drop.append(upper.columns[j])
+    return df.drop(columns=set(to_drop), axis=1)

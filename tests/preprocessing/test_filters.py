@@ -1,93 +1,53 @@
-"""Unit tests for the data preprocessing filter utilities."""
+"""
+Unit tests for the data preprocessing filters in QSARify.
+"""
 import pytest
 import pandas as pd
 import numpy as np
-from qsarify.preprocessing import filters
+import qsarify.preprocessing.filters as filters 
 
 @pytest.fixture
-def sample_dataframe():
-    """Provides a sample DataFrame for testing filter functions."""
-    data = {
-        'col_nzv_1': [1, 1, 1, 1, 1],  # Near zero variance
-        'col_nzv_2': [1, 1, 1, 1, 2],  # Low variance
-        'col_high_var': [1, 2, 3, 4, 5],  # High variance
-        'col_corr_1': [10, 20, 30, 40, 50],  # Highly correlated with col_corr_2
-        'col_corr_2': [10.1, 20.2, 30.3, 40.4, 50.5],  # Highly correlated with col_corr_1
-        'col_uncorr': [5, 4, 3, 2, 1],  # Uncorrelated
-        'col_mixed': [1, 2, 1, 2, 1] # Mixed, but not near zero
-    }
-    return pd.DataFrame(data)
-
-def test_remove_near_zero_variance(sample_dataframe):
-    """Test remove_near_zero_variance function."""
-    df = sample_dataframe.copy()
-
-    # Test with default threshold (0.01)
-    # col_nzv_1 (variance 0) should be removed
-    # col_nzv_2 (variance 0.2) should be kept (0.2 > 0.01)
-    df_filtered = filters.remove_near_zero_variance(df)
-    assert 'col_nzv_1' not in df_filtered.columns
-    assert 'col_nzv_2' in df_filtered.columns
-    assert 'col_high_var' in df_filtered.columns
-    assert 'col_corr_1' in df_filtered.columns
-    assert 'col_corr_2' in df_filtered.columns
-    assert 'col_uncorr' in df_filtered.columns
-    assert 'col_mixed' in df_filtered.columns
-    assert len(df_filtered.columns) == 6
-
-    # Test with a higher threshold (e.g., 0.5)
-    # col_nzv_1, col_nzv_2, col_mixed should be removed
-    df_filtered_high_thresh = filters.remove_near_zero_variance(df, threshold=0.5)
-    assert 'col_nzv_1' not in df_filtered_high_thresh.columns
-    assert 'col_nzv_2' not in df_filtered_high_thresh.columns
-    assert 'col_mixed' not in df_filtered_high_thresh.columns
-    assert len(df_filtered_high_thresh.columns) == 4
-
-    # Test with all columns having high variance
-    df_all_high_var = pd.DataFrame({'A': [1,2,3], 'B': [4,5,6]})
-    df_filtered_all_high_var = filters.remove_near_zero_variance(df_all_high_var)
-    assert len(df_filtered_all_high_var.columns) == 2
-
-    # Test with all columns having zero variance
-    df_all_zero_var = pd.DataFrame({'A': [1,1,1], 'B': [2,2,2]})
-    df_filtered_all_zero_var = filters.remove_near_zero_variance(df_all_zero_var)
-    assert len(df_filtered_all_zero_var.columns) == 0
-
-def test_remove_highly_correlated_columns(sample_dataframe):
-    """Test remove_highly_correlated_columns function."""
-    df = sample_dataframe.copy()
-    print(f"[DEBUG] Sample DataFrame Correlation Matrix:\n{df.corr().abs()}")
-
-    # Test with default threshold (0.95)
-    # col_corr_1 and col_corr_2 are highly correlated (corr ~1.0)
-    df_filtered, removed_cols = filters.remove_highly_correlated_columns(df)
-    assert ('col_corr_1' in df_filtered.columns and 'col_corr_2' not in df_filtered.columns) or \
-           ('col_corr_2' in df_filtered.columns and 'col_corr_1' not in df_filtered.columns)
-    assert len(removed_cols) == 1
-    assert len(df_filtered.columns) == 6
-
-    # Test with a lower threshold (e.g., 0.5) to remove more columns
-    # col_corr_1/2 should be removed, and potentially others depending on correlations
-    df_filtered_low_thresh, removed_cols_low_thresh = filters.remove_highly_correlated_columns(df, threshold=0.5)
-    assert len(removed_cols_low_thresh) >= 1 # At least one of col_corr_1/2
-    assert len(df_filtered_low_thresh.columns) <= 6
-
-    # Test with no highly correlated columns
-    df_no_corr = pd.DataFrame({
-        'A': [1, 2, 3],
-        'B': [3, 2, 1],
-        'C': [1, 3, 2]
+def synthetic_data():
+    """Create a synthetic DataFrame for testing."""
+    return pd.DataFrame({
+        "const_col": [1, 1, 1, 1, 1],
+        "low_var_col": [0.05, 0.04, 0.05, 0.06, 0.05],
+        "high_var_col": [1, 10, 5, 6, 3],
+        "corr_a": [1, 2, 3, 4, 5],
+        "corr_b": [2, 4, 6, 8, 10],  # perfectly correlated with corr_a
+        "unique_col": [7, 6, 2, 9, 11]
     })
-    df_filtered_no_corr, removed_cols_no_corr = filters.remove_highly_correlated_columns(df_no_corr)
-    assert len(removed_cols_no_corr) == 0
-    assert len(df_filtered_no_corr.columns) == 3
 
-    # Test with all columns highly correlated
-    df_all_corr = pd.DataFrame({
-        'A': [1, 2, 3],
-        'B': [1.1, 2.1, 3.1],
-        'C': [1.2, 2.2, 3.2]
-    })
-    df_filtered_all_corr, removed_cols_all_corr = filters.remove_highly_correlated_columns(df_all_corr)
-    assert len(removed_cols_all_corr) == 2 # Should keep only one column
-    assert len(df_filtered_all_corr.columns) == 1
+def test_rm_lowVar_removes_columns_below_threshold(synthetic_data):
+    """Test that filters.rm_lowVar removes columns with variance <= threshold."""
+    result = filters.rm_lowVar(synthetic_data, threshold=0.01)
+    print(result.columns)
+    assert "const_col" not in result.columns
+    assert "high_var_col" in result.columns
+    assert "low_var_col" not in result.columns
+    assert len(result.columns) == 4 
+
+def test_rm_highCorr_removes_one_of_each_correlated_pair(synthetic_data):
+    """Test that filters.rm_highCorr removes one column of highly correlated pairs."""
+    result = filters.rm_highCorr(synthetic_data, threshold=0.95)
+    assert len(result.columns) == 5  # One of corr_a or corr_b should be removed
+    assert not ("corr_a" in result.columns and "corr_b" in result.columns)
+
+def test_rm_highCorr_does_not_remove_below_threshold(synthetic_data):
+    """Test that filters.rm_highCorr keeps columns if correlation is below threshold."""
+    df = synthetic_data.copy()
+    df["corr_c"] = [1, 2, 3, 4, 6]  # imperfect correlation with corr_a
+    result = filters.rm_highCorr(df, threshold=0.99)
+    assert "corr_a" in result.columns
+    assert "corr_b" not in result.columns  # still removed
+    assert "corr_c" in result.columns  # should remain
+
+def test_pipeline_combination(synthetic_data):
+    """Test chaining all filters together."""
+    result = filters.rm_lowVar(synthetic_data, threshold=0.01)
+    result = filters.rm_highCorr(result, threshold=0.9)
+
+    # Expect const_col, high_var_col, and one of corr_a/corr_b to be removed
+    assert "const_col" not in result.columns
+    assert not ("corr_a" in result.columns and "corr_b" in result.columns)
+    assert "unique_col" in result.columns
