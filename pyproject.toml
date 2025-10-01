@@ -36,12 +36,21 @@ dev = [
     "mypy",
     "pytest",
     "black",
+    "pandas-stubs",
+    "scipy-stubs",
 ]
+
+[[tool.mypy.overrides]]
+module = "sklearn.*, numpy.*"
+ignore_missing_imports = true
 
 [tool.hatch.build.targets.wheel]
 packages = [
     "src/qsarify",
 ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.black]
 line-length = 88
@@ -53,6 +62,8 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_calls = true
 disallow_untyped_defs = true
+pretty = true 
+show_error_codes = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -71,6 +82,11 @@ qsarify = "qsarify:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
 
 [project.urls]
 Homepage = "https://github.com/stephenszwiec/qsarify"

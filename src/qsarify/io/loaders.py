@@ -56,7 +56,7 @@ def load_csv_dataset(
         X_df = df.iloc[:, :-1]
 
     if id_column:
-        X_df.index = df[id_column]
+        X_df.index = pd.Index(df[id_column])
         X_df = X_df.drop(columns=[id_column], errors='ignore')
     else:
         X_df.index = pd.RangeIndex(start=1, stop=X_df.shape[0]+1, step=1)

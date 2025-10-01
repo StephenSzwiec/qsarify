@@ -7,10 +7,12 @@ evaluation and validation. These functions are designed to work with NumPy array
 and are optimized for performance.
 
 The metrics implemented here are based on the definitions provided in the
-project's technical design document (GEMINI.md, Section 6.1).
+project's technical design document (Section 6.1).
 """
 import numpy as np
+import sklearn
 from sklearn.model_selection import LeaveOneOut
+
 
 def calculate_kxx(X: np.ndarray) -> float:
     """Calculates the correlation among descriptors in X."""
@@ -228,3 +230,128 @@ def calculate_closeness_metrics(r_squared: float, r_squared_0: float, r_prime_sq
     clos = np.abs(r_squared - r_squared_0) / r_squared
     clos_prime = np.abs(r_squared - r_prime_squared_0) / r_squared
     return clos, clos_prime
+
+def calculate_applicability_domain_metrics(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    y_pred_train: np.ndarray,
+    model: Any,
+    X_test: Optional[np.ndarray] = None,
+) -> Dict[str, Any]:
+    """
+    Calculates all metrics needed for the Williams plot.
+    """
+    n_train, p = X_train.shape
+
+    # --- Standardized Residuals ---
+    resid_train = y_train - y_pred_train
+    
+    uses_intercept = getattr(model, 'fit_intercept', False) or hasattr(model, 'intercept_')
+    p_eff = p + 1 if uses_intercept else p
+    dof = max(n_train - p_eff, 1)
+
+    s_resid = np.sqrt(np.sum(resid_train**2) / dof)
+
+    rstd_train = resid_train / s_resid
+    
+    # --- Leverage (hat values) ---
+    if uses_intercept:
+        Z_train = np.c_[np.ones((n_train, 1)), X_train]
+    else:
+        Z_train = X_train
+
+    XtX_inv = np.linalg.pinv(Z_train.T @ Z_train)
+
+    H_train = Z_train @ XtX_inv @ Z_train.T
+    h_train = np.clip(np.diag(H_train), 0.0, None)
+
+    h_test = None
+    if X_test is not None:
+        if uses_intercept:
+            Z_test = np.c_[np.ones((X_test.shape[0], 1)), X_test]
+        else:
+            Z_test = X_test
+        h_test = np.sum(Z_test @ XtX_inv * Z_test, axis=1)
+        h_test = np.clip(h_test, 0.0, None)
+
+    # Critical leverage h*
+    h_star = 3.0 * (p + 1) / n_train
+
+    return {
+        'h_train': h_train,
+        'h_test': h_test,
+        'rstd_train': rstd_train,
+        'h_star': h_star,
+        's_resid': s_resid,
+    }
+
+def calculate_all(
+        X_train: np.ndarray,
+        X_test: np.ndarray,
+        y_train: np.ndarray,
+        y_test: np.ndarray,
+        model: sklearn.base.BaseEstimator 
+        ) -> dict:
+    """
+    Calculates all statistical metrics for the given training (internal) and test (external) datasets. 
+
+    If a model is provided, it will be used to calculate metrics that require predictions.
+    """
+    metrics = {}
+    kxx = calculate_kxx(X_train)
+    kxy = calculate_kxy(X_train, y_train) 
+    mae = calculate_mae(y_train, model.predict(X_train)) 
+    rmse = calculate_rmse(y_train, model.predict(X_train))
+    mse = calculate_mse(y_train, model.predict(X_train))
+    rss = calculate_rss(y_train, model.predict(X_train))
+    mss = calculate_mss(y_train, model.predict(X_train))
+    press_loo = calculate_press_loo(model, X_train, y_train)
+    tss = calculate_tss(y_train)
+    r_squared = calculate_r_squared(y_train, model.predict(X_train))
+    r_squared_adj = calculate_r_squared_adj(y_train, model.predict(X_train), X_train.shape[1])
+    s = calculate_s(y_train, model.predict(X_train), X_train.shape[1])
+    f_statistic = calculate_f_statistic(y_train, model.predict(X_train), X_train.shape[1])
+    lof = calculate_lof(y_train, model.predict(X_train), X_train.shape[1])
+    ccc = calculate_ccc(y_train, model.predict(X_train))
+    q_squared_loo = calculate_q_squared_loo(model, X_train, y_train)
+    press_ext = calculate_press_ext(y_test, model.predict(X_test))
+    q_squared_f1 = calculate_q_squared_f1(y_test, model.predict(X_test), y_train)
+    q_squared_f2 = calculate_q_squared_f2(y_test, model.predict(X_test))
+    q_squared_f3 = calculate_q_squared_f3(y_test, model.predict(X_test), y_train)
+    r_squared_ext = calculate_r_squared_ext(y_test, model.predict(X_test))
+    r_squared_0 = calculate_r_squared_0(y_train, model.predict(X_train))
+    r_prime_squared_0 = calculate_r_prime_squared_0(y_train, model.predict(X_train))
+    roy_metrics = calculate_roy_metrics(r_squared_ext, r_squared_0, r_prime_squared_0, r_squared)
+    closeness_metrics = calculate_closeness_metrics(r_squared, r_squared_0, r_prime_squared_0)
+    k = calculate_k(y_train, model.predict(X_train))
+    k_prime = calculate_k_prime(y_train, model.predict(X_train))
+    
+    return {
+        'kxx': kxx,
+        'kxy': kxy,
+        'mae': mae,
+        'rmse': rmse,
+        'mse': mse,
+        'rss': rss,
+        'mss': mss,
+        'press_loo': press_loo,
+        'tss': tss,
+        'r_squared': r_squared,
+        'r_squared_adj': r_squared_adj,
+        's': s,
+        'f_statistic': f_statistic,
+        'lof': lof,
+        'ccc': ccc,
+        'q_squared_loo': q_squared_loo,
+        'press_ext': press_ext,
+        'q_squared_f1': q_squared_f1,
+        'q_squared_f2': q_squared_f2,
+        'q_squared_f3': q_squared_f3,
+        'r_squared_ext': r_squared_ext,
+        'r_squared_0': r_squared_0,
+        'r_prime_squared_0': r_prime_squared_0,
+        'roy_metrics': roy_metrics,
+        'closeness_metrics': closeness_metrics,
+        'k': k,
+        'k_prime': k_prime
+    }
