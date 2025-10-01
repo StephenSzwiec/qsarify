@@ -1,5 +1,6 @@
 import random
 import warnings
+import itertools
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -7,343 +8,280 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_score
+from joblib import Parallel, delayed
 
 from ..utils.statistics import (
-    calculate_lof, calculate_q_squared_loo, calculate_r_squared_adj
+    calculate_kxx,
+    calculate_kxy,
+    calculate_lof,
+    calculate_q_squared_loo,
+    calculate_r_squared_adj,
 )
 from .selection import FeatureCluster
 
 
 @dataclass
 class GeneticConfig:
-    """Configuration for Genetic Algorithm feature selection"""
+    """Configuration for the hybrid feature selection process."""
+
     max_vars: int = 10
     population_size: int = 50
     max_generations: int = 100
     mutation_rate: float = 0.1
     keep_best: int = 5
-    fitness_functions: List[str] = field(default_factory=lambda: ['Q2loo', 'R2Adj', 'LOF', 'RMSE-CV'])
+    fitness_functions: List[str] = field(
+        default_factory=lambda: ["Q2loo", "R2Adj", "LOF", "RMSE-CV"]
+    )
+    use_quik_rule: bool = True
+    delta_k: float = 0.05
     significance_levels: List[float] = field(
         default_factory=lambda: [0.0001, 0.001, 0.01, 0.05, 0.10, 0.15, 0.20]
     )
     clustering_distance: float = 3.0
-    clustering_method: str = 'average'
+    clustering_method: str = "average"
     epsilon: float = 1e-10
     n_jobs: int = -1
     random_state: int = 42
     verbose: bool = True
-    quik_rule: bool = True
 
 
 class GeneticFeatureSelector:
     """
-    Genetic Algorithm with Tournament Selection for feature selection.
-    Enhanced version with proper statistical validation and QUIK rule.
+    Selects optimal feature subsets using a hybrid strategy.
+
+    - For 1-2 features: A full subset search is performed.
+    - For 3+ features: A genetic algorithm with a fixed feature count is used for each size.
     """
 
     def __init__(self, config: GeneticConfig):
-        """
-        Initialize genetic feature selector.
-
-        Args:
-            config: Configuration for genetic algorithm
-        """
         self.config = config
-        self.clusterer = None
-        self.population = []
-        self.fitness_history = []
-        self.best_individuals = {}
+        self.clusterer: Optional[FeatureCluster] = None
+        self.best_individuals: Dict[int, Dict[str, Any]] = {}
         self.random_state = random.Random(config.random_state)
         np.random.seed(config.random_state)
 
-    def _create_individual(self, max_features: int) -> List[str]:
-        """Create a random individual (feature subset)."""
-        if not self.clusterer or not self.clusterer.cluster_info:
-            return []
-
-        n_features = self.random_state.randint(1, min(max_features, len(self.clusterer.cluster_info)))
-        selected_clusters = self.random_state.sample(
-            range(len(self.clusterer.cluster_info)),
-            n_features
-        )
-
-        individual = []
-        for cluster_idx in selected_clusters:
-            cluster_features = self.clusterer.cluster_info[cluster_idx]
-            if cluster_features:
-                feature = self.random_state.choice(cluster_features)
-                individual.append(feature)
-
-        return sorted(list(set(individual)))  # Remove duplicates and sort
-
-    def _mutate_individual(self, individual: List[str]) -> List[str]:
-        """Mutate an individual by swapping features."""
-        if (not individual or not self.clusterer or
-            self.random_state.random() > self.config.mutation_rate):
-            return individual
-
-        mutated = individual.copy()
-
-        # Choose mutation type
-        mutation_type = self.random_state.choice(['swap', 'add', 'remove'])
-
-        if mutation_type == 'swap' and len(mutated) > 0:
-            # Swap one feature with another from a different cluster
-            swap_idx = self.random_state.randint(0, len(mutated) - 1)
-            current_feature = mutated[swap_idx]
-            current_cluster = self.clusterer.cludict.get(current_feature, -1)
-
-            # Find a different cluster
-            available_clusters = [
-                i for i, cluster in enumerate(self.clusterer.cluster_info)
-                if i != (current_cluster - 1) and cluster  # cluster IDs are 1-indexed
-            ]
-
-            if available_clusters:
-                new_cluster_idx = self.random_state.choice(available_clusters)
-                new_feature = self.random_state.choice(self.clusterer.cluster_info[new_cluster_idx])
-                mutated[swap_idx] = new_feature
-
-        elif mutation_type == 'add' and len(mutated) < self.config.max_vars:
-            # Add a feature from an unused cluster
-            used_clusters = set()
-            for feature in mutated:
-                cluster_id = self.clusterer.cludict.get(feature, -1)
-                if cluster_id > 0:
-                    used_clusters.add(cluster_id - 1)  # Convert to 0-indexed
-
-            available_clusters = [
-                i for i in range(len(self.clusterer.cluster_info))
-                if i not in used_clusters and self.clusterer.cluster_info[i]
-            ]
-
-            if available_clusters:
-                new_cluster_idx = self.random_state.choice(available_clusters)
-                new_feature = self.random_state.choice(self.clusterer.cluster_info[new_cluster_idx])
-                mutated.append(new_feature)
-
-        elif mutation_type == 'remove' and len(mutated) > 1:
-            # Remove a random feature
-            remove_idx = self.random_state.randint(0, len(mutated) - 1)
-            mutated.pop(remove_idx)
-
-        return sorted(list(set(mutated)))
-
-    def _crossover(self, parent1: List[str], parent2: List[str]) -> Tuple[List[str], List[str]]:
-        """Perform crossover between two parents."""
-        if len(parent1) <= 1 or len(parent2) <= 1:
-            return parent1.copy(), parent2.copy()
-
-        # Find common features
-        common = list(set(parent1) & set(parent2))
-        unique1 = list(set(parent1) - set(parent2))
-        unique2 = list(set(parent2) - set(parent1))
-
-        # Create children by mixing unique features
-        child1 = common.copy()
-        child2 = common.copy()
-
-        all_unique = unique1 + unique2
-        self.random_state.shuffle(all_unique)
-
-        # Split unique features between children
-        mid = len(all_unique) // 2
-        child1.extend(all_unique[:mid])
-        child2.extend(all_unique[mid:])
-
-        # Ensure children don't exceed max_vars
-        child1 = sorted(child1[:self.config.max_vars])
-        child2 = sorted(child2[:self.config.max_vars])
-
-        return child1, child2
-
-    def _calculate_fitness(self, individual: List[str], X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
-        """Calculate fitness scores for an individual."""
-        if not individual or len(individual) == 0:
+    def _calculate_fitness(
+        self,
+        individual: List[str],
+        X: pd.DataFrame,
+        y: pd.Series,
+    ) -> Dict[str, float]:
+        """Calculates fitness scores for a single individual."""
+        if not individual:
             return {metric: -np.inf for metric in self.config.fitness_functions}
 
         try:
             X_subset = X[individual]
-
-            # Check for sufficient data
-            if len(X_subset) < 2 or X_subset.shape[1] == 0:
+            if X_subset.shape[1] == 0:
                 return {metric: -np.inf for metric in self.config.fitness_functions}
 
-            # Create and fit model
-            model = LinearRegression()
+            if self.config.use_quik_rule:
+                k_xx = calculate_kxx(X_subset.values)
+                k_xy = calculate_kxy(X_subset.values, y.values)
+                if (k_xy - k_xx) < self.config.delta_k:
+                    return {metric: -np.inf for metric in self.config.fitness_functions}
 
+            model = LinearRegression(n_jobs=1)
             fitness_scores = {}
 
-            # Calculate different fitness metrics
-            if 'Q2loo' in self.config.fitness_functions:
-                try:
-                    q2_loo = calculate_q_squared_loo(model, X_subset.values, y.values)
-                    fitness_scores['Q2loo'] = q2_loo if not np.isnan(q2_loo) else -np.inf
-                except:
-                    fitness_scores['Q2loo'] = -np.inf
+            if "Q2loo" in self.config.fitness_functions:
+                q2_loo = calculate_q_squared_loo(model, X_subset.values, y.values)
+                fitness_scores["Q2loo"] = q2_loo if not np.isnan(q2_loo) else -np.inf
 
-            # Fit model for other metrics
+            if "RMSE-CV" in self.config.fitness_functions:
+                cv_scores = cross_val_score(
+                    model, X_subset, y, cv=5, scoring="neg_root_mean_squared_error"
+                )
+                fitness_scores["RMSE-CV"] = -np.mean(cv_scores)
+
             model.fit(X_subset, y)
             y_pred = model.predict(X_subset)
 
-            if 'R2Adj' in self.config.fitness_functions:
-                try:
-                    r2_adj = calculate_r_squared_adj(y.values, y_pred, X_subset.shape[1])
-                    fitness_scores['R2Adj'] = r2_adj if not np.isnan(r2_adj) else -np.inf
-                except:
-                    fitness_scores['R2Adj'] = -np.inf
+            if "R2Adj" in self.config.fitness_functions:
+                r2_adj = calculate_r_squared_adj(y.values, y_pred, X_subset.shape[1])
+                fitness_scores["R2Adj"] = r2_adj if not np.isnan(r2_adj) else -np.inf
 
-            if 'LOF' in self.config.fitness_functions:
-                try:
-                    lof = calculate_lof(y.values, y_pred, X_subset.shape[1])
-                    # LOF should be minimized, so we negate it
-                    fitness_scores['LOF'] = -lof if not np.isnan(lof) else -np.inf
-                except:
-                    fitness_scores['LOF'] = -np.inf
-
-            if 'RMSE-CV' in self.config.fitness_functions:
-                try:
-                    cv_scores = cross_val_score(
-                        model, X_subset, y,
-                        cv=self.config.cv_folds if hasattr(self.config, 'cv_folds') else 5,
-                        scoring='neg_root_mean_squared_error'
-                    )
-                    rmse_cv = -np.mean(cv_scores)
-                    # RMSE should be minimized, so we negate it
-                    fitness_scores['RMSE-CV'] = -rmse_cv if not np.isnan(rmse_cv) else -np.inf
-                except:
-                    fitness_scores['RMSE-CV'] = -np.inf
-
-            # Apply QUIK rule if enabled
-            if self.config.quik_rule:
-                n_samples, n_features = X_subset.shape
-                if n_features > 0:
-                    ratio = n_samples / n_features
-                    if ratio < 5:  # QUIK rule threshold
-                        # Penalize models that don't meet QUIK rule
-                        penalty_factor = 0.1
-                        fitness_scores = {k: v * penalty_factor for k, v in fitness_scores.items()}
+            if "LOF" in self.config.fitness_functions:
+                lof = calculate_lof(y.values, y_pred, X_subset.shape[1])
+                fitness_scores["LOF"] = -lof if not np.isnan(lof) else -np.inf
 
             return fitness_scores
 
-        except Exception as e:
-            warnings.warn(f"Fitness calculation failed for {individual}: {e}")
+        except Exception:
             return {metric: -np.inf for metric in self.config.fitness_functions}
 
-    def _tournament_selection(self, population: List[Tuple[List[str], Dict[str, float]]],
-                            tournament_size: int = 3) -> List[str]:
-        """Select individual using tournament selection."""
-        tournament = self.random_state.sample(population, min(tournament_size, len(population)))
-
-        # Select based on primary fitness function (first in list)
-        primary_metric = self.config.fitness_functions[0]
-        best_individual = max(tournament, key=lambda x: x[1].get(primary_metric, -np.inf))
-
-        return best_individual[0]
-
-    def fit(self, X: pd.DataFrame, y: pd.Series, clustering_config: Optional[Dict] = None) -> Dict[str, Any]:
-        """
-        Run genetic algorithm for feature selection.
-
-        Args:
-            X: Feature matrix
-            y: Target variable
-            clustering_config: Optional configuration for clustering
-
-        Returns:
-            Dictionary containing best individuals and selection results
-        """
+    def _full_subset_search(
+        self,
+        n_features: int,
+        X: pd.DataFrame,
+        y: pd.Series,
+    ) -> Optional[Dict[str, Any]]:
+        """Performs an exhaustive search for the best feature subset of a given size."""
+        if n_features > len(X.columns):
+            return None
+            
+        all_combinations = list(itertools.combinations(X.columns, n_features))
         if self.config.verbose:
-            print(f"Starting genetic algorithm feature selection...")
-            print(f"Data shape: {X.shape}")
+            print(f"  Testing {len(all_combinations)} combinations for {n_features} feature(s)પૂર્ણ...")
 
-        # Perform hierarchical clustering
-        clustering_params = clustering_config or {}
-        self.clusterer = FeatureCluster(
-            X,
-            cut_d=self.config.clustering_distance,
-            link=self.config.clustering_method,
-            epsilon=self.config.epsilon,
-            **clustering_params
+        results = Parallel(n_jobs=self.config.n_jobs)(
+            delayed(self._calculate_fitness)(list(individual), X, y)
+            for individual in all_combinations
         )
 
-        cluster_dict = self.clusterer.set_cluster(verbose=self.config.verbose)
+        best_fitness = -np.inf
+        best_result = None
+        primary_metric = self.config.fitness_functions[0]
 
-        if self.config.verbose:
-            print(f"Created {len(self.clusterer.cluster_info)} clusters")
-            cophenetic_corrs = self.clusterer.cophenetic_correlation()
-            print(f"Cophenetic correlations: {cophenetic_corrs}")
+        for i, fitness_scores in enumerate(results):
+            score = fitness_scores.get(primary_metric, -np.inf)
+            if score > best_fitness:
+                best_fitness = score
+                best_result = {
+                    "features": list(all_combinations[i]),
+                    "fitness": fitness_scores,
+                }
+        return best_result
 
-        # Initialize population
-        self.population = []
-        for _ in range(self.config.population_size):
-            individual = self._create_individual(self.config.max_vars)
-            if individual:  # Only add non-empty individuals
+    def _mutate_swap_only(self, individual: List[str]) -> List[str]:
+        """Performs a cluster-aware swap mutation, preserving feature count."""
+        if not self.clusterer or self.random_state.random() > self.config.mutation_rate:
+            return individual
+
+        mutated = individual.copy()
+        swap_idx = self.random_state.randrange(len(mutated))
+        current_feature = mutated[swap_idx]
+        current_cluster_id = self.clusterer.cludict.get(current_feature)
+
+        # Find a feature from a different cluster
+        available_clusters = [
+            i for i, features in enumerate(self.clusterer.cluster_info)
+            if features and (i + 1) != current_cluster_id
+        ]
+        if available_clusters:
+            new_cluster_idx = self.random_state.choice(available_clusters)
+            new_feature = self.random_state.choice(self.clusterer.cluster_info[new_cluster_idx])
+            mutated[swap_idx] = new_feature
+
+        return sorted(list(set(mutated)))
+
+    def _crossover_fixed_n(
+        self,
+        parent1: List[str],
+        parent2: List[str],
+        n_features: int,
+    ) -> Tuple[List[str], List[str]]:
+        """Performs crossover that preserves the feature count."""
+        combined_pool = sorted(list(set(parent1) | set(parent2)))
+        
+        child1 = self.random_state.sample(combined_pool, min(n_features, len(combined_pool)))
+        child2 = self.random_state.sample(combined_pool, min(n_features, len(combined_pool)))
+
+        return sorted(child1), sorted(child2)
+
+    def _run_ga_for_n_features(
+        self,
+        n_features: int,
+        X: pd.DataFrame,
+        y: pd.Series,
+    ) -> Optional[Dict[str, Any]]:
+        """Runs a dedicated GA to find the best model for a fixed number of features."""
+        if not self.clusterer:
+            raise RuntimeError("Clusterer not initialized.")
+
+        # 1. Create initial population
+        population: List[Tuple[List[str], Dict[str, float]]] = []
+        attempts = 0
+        while len(population) < self.config.population_size and attempts < self.config.population_size * 5:
+            individual = sorted(list(set(self.random_state.sample(list(X.columns), n_features))))
+            if individual not in [p[0] for p in population]:
                 fitness = self._calculate_fitness(individual, X, y)
-                self.population.append((individual, fitness))
+                population.append((individual, fitness))
+            attempts += 1
+        
+        if not population:
+            warnings.warn(f"Could not create initial population for {n_features} features.")
+            return None
 
-        if not self.population:
-            raise ValueError("Failed to create valid population")
-
-        # Evolution loop
+        # 2. Evolution loop
         for generation in range(self.config.max_generations):
-            new_population = []
-
-            # Keep best individuals
             sorted_pop = sorted(
-                self.population,
-                key=lambda x: x[1].get(self.config.fitness_functions[0], -np.inf),
-                reverse=True
+                population,
+                key=lambda ind: ind[1].get(self.config.fitness_functions[0], -np.inf),
+                reverse=True,
             )
+            new_population = sorted_pop[: self.config.keep_best]
 
-            new_population.extend(sorted_pop[:self.config.keep_best])
-
-            # Generate new individuals
             while len(new_population) < self.config.population_size:
-                parent1 = self._tournament_selection(self.population)
-                parent2 = self._tournament_selection(self.population)
-
-                child1, child2 = self._crossover(parent1, parent2)
-                child1 = self._mutate_individual(child1)
-                child2 = self._mutate_individual(child2)
+                parent1 = self._tournament_selection(population)
+                parent2 = self._tournament_selection(population)
+                child1, child2 = self._crossover_fixed_n(parent1, parent2, n_features)
+                child1 = self._mutate_swap_only(child1)
+                child2 = self._mutate_swap_only(child2)
 
                 for child in [child1, child2]:
                     if child and len(new_population) < self.config.population_size:
                         fitness = self._calculate_fitness(child, X, y)
                         new_population.append((child, fitness))
+            population = new_population
 
-            self.population = new_population[:self.config.population_size]
+        # 3. Return best individual from the final population
+        best_individual = max(
+            population, key=lambda ind: ind[1].get(self.config.fitness_functions[0], -np.inf)
+        )
+        return {"features": best_individual[0], "fitness": best_individual[1]}
 
-            # Log progress
-            if self.config.verbose and generation % 10 == 0:
-                best_fitness = max(
-                    ind[1].get(self.config.fitness_functions[0], -np.inf)
-                    for ind in self.population
-                )
-                print(f"Generation {generation}: Best {self.config.fitness_functions[0]} = {best_fitness:.4f}")
+    def _tournament_selection(
+        self,
+        population: List[Tuple[List[str], Dict[str, float]]],
+        tournament_size: int = 3,
+    ) -> List[str]:
+        """Selects an individual using tournament selection."""
+        tournament = self.random_state.sample(population, min(tournament_size, len(population)))
+        primary_metric = self.config.fitness_functions[0]
+        best_individual = max(tournament, key=lambda ind: ind[1].get(primary_metric, -np.inf))
+        return best_individual[0]
 
-        # Collect best individuals by number of variables
-        self.best_individuals = {}
-        for n_vars in range(1, self.config.max_vars + 1):
-            candidates = [
-                ind for ind in self.population
-                if len(ind[0]) == n_vars
-            ]
+    def fit(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series,
+        clustering_config: Optional[Dict] = None,
+    ) -> Dict[int, Any]:
+        """
+        Runs the hybrid feature selection process.
+        """
+        if self.config.verbose:
+            print("Starting hybrid feature selection...")
 
-            if candidates:
-                best = max(
-                    candidates,
-                    key=lambda x: x[1].get(self.config.fitness_functions[0], -np.inf)
-                )
-                self.best_individuals[n_vars] = {
-                    'features': best[0],
-                    'fitness': best[1],
-                    'n_features': len(best[0])
-                }
+        self.clusterer = FeatureCluster(
+            X,
+            cut_d=self.config.clustering_distance,
+            link=self.config.clustering_method,
+            epsilon=self.config.epsilon,
+            **(clustering_config or {}),
+        )
+        self.clusterer.set_cluster(verbose=False) # Verbosity handled here
+
+        # --- Phase 1: Full Subset Search (1-2 features) ---
+        for n_vars in range(1, 3):
+            if n_vars > self.config.max_vars:
+                break
+            best_for_n = self._full_subset_search(n_vars, X, y)
+            if best_for_n:
+                self.best_individuals[n_vars] = best_for_n
+
+        # --- Phase 2: Genetic Algorithm (3+ features) ---
+        for n_vars in range(3, self.config.max_vars + 1):
+            if self.config.verbose:
+                print(f"Running GA for {n_vars} features...")
+            best_for_n = self._run_ga_for_n_features(n_vars, X, y)
+            if best_for_n:
+                self.best_individuals[n_vars] = best_for_n
 
         if self.config.verbose:
-            print("Genetic algorithm completed!")
-            for n_vars, result in self.best_individuals.items():
-                print(f"{n_vars} vars: {result['fitness']} - {result['features']}")
+            print("\nFeature selection completed.")
+            for n_vars, result in sorted(self.best_individuals.items()):
+                print(f"  Best model with {n_vars} vars: {result['fitness']}")
 
         return self.best_individuals
