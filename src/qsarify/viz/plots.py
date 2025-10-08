@@ -206,23 +206,55 @@ def plot_qq(
     return fig, ax
 
 def plot_williams(
-    model_result: Any, # Should be ModelResult
-    X_train: pd.DataFrame,
+    model_result: Any = None, # Should be ModelResult
+    model: Any = None,
+    X_train: Optional[pd.DataFrame] = None,
     X_test: Optional[pd.DataFrame] = None,
+    y_train: Optional[pd.Series] = None,
+    y_test: Optional[pd.Series] = None,
     title: str = "Williams Plot of Applicability Domain",
     figsize: tuple[float, float] = (8.5, 8.5),
     save_path: Optional[str] = None,
 ):
     """
     Generates a Williams plot for applicability domain analysis.
+    Can accept either a model result object or model + data directly for integration
+    with qsarify model components.
     """
     set_qsarify_style()
 
+    # Extract data from model_result or direct inputs
+    if model_result is not None:
+        # Use model_result
+        fitted_model = getattr(model_result, 'model', None)
+        y_true_train = getattr(model_result, 'y_true_train', None)
+        y_pred_train = getattr(model_result, 'y_pred_train', None)
+        y_true_test = getattr(model_result, 'y_true_test', None)
+        y_pred_test = getattr(model_result, 'y_pred_test', None)
+        
+        # Get X data - may need to be passed separately
+        if X_train is None:
+            raise ValueError("X_train must be provided even when using model_result")
+            
+    elif model is not None:
+        # Use model + data directly
+        fitted_model = model
+        y_true_train = y_train
+        y_true_test = y_test
+        # Calculate predictions
+        y_pred_train = model.predict(X_train) if X_train is not None else None
+        y_pred_test = model.predict(X_test) if X_test is not None else None
+    else:
+        raise ValueError("Either model_result or model + data must be provided")
+
+    if fitted_model is None or X_train is None or y_true_train is None or y_pred_train is None:
+        raise ValueError("Insufficient data for Williams plot")
+
     ad_metrics = statistics.calculate_applicability_domain_metrics(
         X_train.values,
-        model_result.y_true_train.values,
-        model_result.y_pred_train.values,
-        model_result.model,
+        y_true_train.values if hasattr(y_true_train, 'values') else y_true_train,
+        y_pred_train.values if hasattr(y_pred_train, 'values') else y_pred_train,
+        fitted_model,
         X_test.values if X_test is not None else None,
     )
 
@@ -233,7 +265,7 @@ def plot_williams(
 
     fig, ax = plt.subplots(figsize=figsize)
 
-    # --- Aesthetics & limits ---
+    # --- Aesthetics & limits - keeping existing style ---
     all_rstd = []
     if rstd_train is not None:
         all_rstd.extend(rstd_train)
@@ -254,7 +286,7 @@ def plot_williams(
     x_pad = max(0.02, 0.1 * x_max_data)
     x_max = max(h_star * 1.2, x_max_data + x_pad)
 
-    # --- Scatter points ---
+    # --- Scatter points - keeping existing style ---
     if h_train is not None and rstd_train is not None:
         ax.scatter(
             h_train,
@@ -266,8 +298,8 @@ def plot_williams(
             edgecolor='k',
             label="Training set",
         )
-    if h_test is not None and model_result.y_true_test is not None and model_result.y_pred_test is not None:
-        residuals_test = model_result.y_true_test - model_result.y_pred_test
+    if h_test is not None and y_true_test is not None and y_pred_test is not None:
+        residuals_test = y_true_test - y_pred_test
         rstd_test = residuals_test / ad_metrics['s_resid']
         ax.scatter(
             h_test,
@@ -280,7 +312,7 @@ def plot_williams(
             label="Test set",
         )
 
-    # --- Lines & annotations ---
+    # --- Lines & annotations - keeping existing style ---
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
 
@@ -331,54 +363,76 @@ def plot_williams(
 
     return fig, ax
 
-def plot_experimental_vs_predicted(
-    model_result: Any, # Should be ModelResult
-    title: str = "Experimental vs. Predicted",
+def plot_regression(
+    model_result: Any = None, # Should be ModelResult
+    model: Any = None,
+    X_train: Optional[pd.DataFrame] = None,
+    X_test: Optional[pd.DataFrame] = None, 
+    y_train: Optional[pd.Series] = None,
+    y_test: Optional[pd.Series] = None,
+    title: str = "Regression Plot - True vs Predicted",
     figsize: tuple[float, float] = (8.5, 8.5),
     save_path: Optional[str] = None,
 ):
     """
-    Generates a plot of experimental vs. predicted values.
+    Enhanced regression plot with 45-degree line showing true vs predicted values.
+    Can accept either a model result object or model + data directly for integration
+    with qsarify model components.
     """
     set_qsarify_style()
+    
+    # Extract data from model_result or direct inputs
+    if model_result is not None:
+        y_true_train = getattr(model_result, 'y_true_train', None)
+        y_pred_train = getattr(model_result, 'y_pred_train', None)
+        y_true_test = getattr(model_result, 'y_true_test', None)
+        y_pred_test = getattr(model_result, 'y_pred_test', None)
+    elif model is not None:
+        # Calculate predictions from model and data
+        y_pred_train = model.predict(X_train) if X_train is not None else None
+        y_pred_test = model.predict(X_test) if X_test is not None else None
+        y_true_train = y_train
+        y_true_test = y_test
+    else:
+        raise ValueError("Either model_result or model + data must be provided")
 
     fig, ax = plt.subplots(figsize=figsize)
 
     all_true = []
     all_pred = []
 
-    # Training data
-    if model_result.y_true_train is not None and model_result.y_pred_train is not None:
+    # Training data - keeping existing style
+    if y_true_train is not None and y_pred_train is not None:
         ax.scatter(
-            model_result.y_true_train,
-            model_result.y_pred_train,
+            y_true_train,
+            y_pred_train,
             alpha=0.6,
             label="Training set",
             color=colors.TRAIN_COLOR,
         )
-        all_true.extend(model_result.y_true_train)
-        all_pred.extend(model_result.y_pred_train)
+        all_true.extend(y_true_train)
+        all_pred.extend(y_pred_train)
 
-    # Test data
-    if model_result.y_true_test is not None and model_result.y_pred_test is not None:
+    # Test data - keeping existing style
+    if y_true_test is not None and y_pred_test is not None:
         ax.scatter(
-            model_result.y_true_test,
-            model_result.y_pred_test,
+            y_true_test,
+            y_pred_test,
             alpha=0.6,
             label="Test set",
             color=colors.TEST_COLOR,
             marker="x",
         )
-        all_true.extend(model_result.y_true_test)
-        all_pred.extend(model_result.y_pred_test)
+        all_true.extend(y_true_test)
+        all_pred.extend(y_pred_test)
 
-    # 45-degree line
+    # 45-degree line - keeping existing style
     if all_true and all_pred:
         min_val = min(min(all_true), min(all_pred))
         max_val = max(max(all_true), max(all_pred))
         ax.plot([min_val, max_val], [min_val, max_val], color="black", linestyle="--", linewidth=1)
 
-    ax.set_xlabel("Experimental Values", fontsize=14)
+    ax.set_xlabel("True Values", fontsize=14)
     ax.set_ylabel("Predicted Values", fontsize=14)
     ax.set_title(title, fontsize=20)
     ax.legend()
@@ -389,3 +443,16 @@ def plot_experimental_vs_predicted(
         fig.savefig(save_path, dpi=300)
 
     return fig, ax
+
+
+def plot_experimental_vs_predicted(
+    model_result: Any, # Should be ModelResult
+    title: str = "Experimental vs. Predicted",
+    figsize: tuple[float, float] = (8.5, 8.5),
+    save_path: Optional[str] = None,
+):
+    """
+    Generates a plot of experimental vs. predicted values.
+    """
+    return plot_regression(model_result=model_result, title=title, 
+                         figsize=figsize, save_path=save_path)

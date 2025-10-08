@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -178,30 +178,125 @@ def create_model(
     return MODEL_REGISTRY[model_type](optimization_config, genetic_config)
 
 
-class ModelComparison:
+class UnifiedModelComparison:
     """
-    Utility class for comparing multiple models with comprehensive statistics.
+    Unified head-to-head model comparison interface.
+    
+    Generates all model types for a given X_train, X_test, Y_train, Y_test tuple
+    and configuration, allowing comprehensive comparison of MLR (with GA feature selection)
+    vs non-MLR models (with gradient-based hyperparameter optimization).
     """
 
-    def __init__(self, models: Dict[str, BaseModel]):
+    def __init__(self, 
+                 optimization_config: Optional[OptimizationConfig] = None,
+                 genetic_config: Optional[GeneticConfig] = None,
+                 include_models: Optional[List[str]] = None):
         """
-        Initialize model comparison.
+        Initialize unified model comparison.
 
         Args:
-            models: Dictionary mapping model names to model instances
+            optimization_config: Configuration for hyperparameter optimization
+            genetic_config: Configuration for genetic algorithm feature selection
+            include_models: List of model types to include (None = all models)
         """
-        self.models = models
+        self.optimization_config = optimization_config or OptimizationConfig()
+        self.genetic_config = genetic_config
+        
+        # Define which models to include
+        available_models = list(MODEL_REGISTRY.keys())
+        self.include_models = include_models or available_models
+        
+        self.models = {}
         self.results = {}
         self.statistics = {}
+        self.preprocessing_info = None
+        
+    def setup_models(self, use_preprocessing: bool = True) -> None:
+        """
+        Setup all model instances with appropriate configurations.
+        
+        Args:
+            use_preprocessing: Whether to apply preprocessing pipeline
+        """
+        for model_name in self.include_models:
+            if model_name not in MODEL_REGISTRY:
+                continue
+                
+            # Configure optimization based on model type
+            if model_name in ["linear_regression", "mlr"]:
+                # MLR models use GA feature selection
+                model_config = OptimizationConfig(
+                    use_gradient_optimization=False,
+                    **self.optimization_config.__dict__
+                )
+                self.models[model_name] = create_model(
+                    model_name, model_config, self.genetic_config
+                )
+            else:
+                # Non-MLR models use full feature set with gradient optimization
+                model_config = OptimizationConfig(
+                    use_gradient_optimization=True,
+                    **self.optimization_config.__dict__
+                )
+                self.models[model_name] = create_model(
+                    model_name, model_config, None  # No genetic config for non-MLR
+                )
 
-    def fit_all(
+    def run_comprehensive_comparison(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series,
+        preprocessing_config: Optional[Any] = None,
+        optimize: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Run comprehensive head-to-head model comparison.
+        
+        Takes raw data, applies preprocessing, and trains all models with
+        appropriate configurations (GA-MLR vs full-feature with gradient optimization).
+        
+        Args:
+            X: Raw feature matrix
+            y: Raw target variable  
+            preprocessing_config: Configuration for preprocessing pipeline
+            optimize: Whether to perform hyperparameter optimization
+            
+        Returns:
+            Dictionary containing comprehensive results for all models
+        """
+        from ..preprocessing.preprocessing import comprehensive_preprocess, PreprocessingConfig
+        
+        # Apply preprocessing pipeline
+        if preprocessing_config is None:
+            preprocessing_config = PreprocessingConfig()
+            
+        X_train, X_test, y_train, y_test, scaler, preprocessing_info = comprehensive_preprocess(
+            X, y, preprocessing_config
+        )
+        
+        self.preprocessing_info = preprocessing_info
+        
+        # Setup models with appropriate configurations
+        self.setup_models()
+        
+        print("="*80)
+        print("UNIFIED HEAD-TO-HEAD MODEL COMPARISON")
+        print("="*80)
+        print(f"Dataset: {len(X)} samples, {len(X.columns)} original features")
+        print(f"After preprocessing: {preprocessing_info['n_final_features']} features")
+        print(f"Train/Test split: {len(X_train)}/{len(X_test)} samples")
+        print("="*80)
+
+        # Train all models
+        return self._fit_all_models(X_train, X_test, y_train, y_test, optimize)
+    
+    def _fit_all_models(
         self,
         X_train: pd.DataFrame,
+        X_test: pd.DataFrame, 
         y_train: pd.Series,
-        X_test: pd.DataFrame,
         y_test: pd.Series,
-        optimize: bool = True,
-        select_features: bool = None,
+        optimize: bool = True
     ) -> Dict[str, Any]:
         """
         Fit all models and calculate comprehensive statistics.
@@ -321,7 +416,7 @@ class ModelComparison:
 
         return pd.DataFrame(summary_data)
 
-    def get_best_.model(self, metric: str = "test_r2") -> tuple[str, BaseModel]:
+    def get_best_model(self, metric: str = "test_r2") -> tuple[str, BaseModel]:
         """
         Get the best performing model based on specified metric.
 

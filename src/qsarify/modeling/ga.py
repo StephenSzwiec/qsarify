@@ -22,13 +22,14 @@ from .selection import FeatureCluster
 
 @dataclass
 class GeneticConfig:
-    """Configuration for the hybrid feature selection process."""
+    """Configuration for the GA-MLR feature selection process."""
 
     max_vars: int = 10
     population_size: int = 50
     max_generations: int = 100
     mutation_rate: float = 0.1
-    keep_best: int = 5
+    keep_best: int = 5  # Keep best individuals per generation
+    top_k_models: int = 3  # Keep top K models per M features
     fitness_functions: List[str] = field(
         default_factory=lambda: ["Q2loo", "R2Adj", "LOF", "RMSE-CV"]
     )
@@ -47,16 +48,19 @@ class GeneticConfig:
 
 class GeneticFeatureSelector:
     """
-    Selects optimal feature subsets using a hybrid strategy.
+    Selects optimal feature subsets using a hybrid cluster-based strategy.
+    
+    Key innovation: For 3+ features, tournament selection operates over feature clusters
+    rather than individual features, ensuring diversity and avoiding highly correlated features.
 
-    - For 1-2 features: A full subset search is performed.
-    - For 3+ features: A genetic algorithm with a fixed feature count is used for each size.
+    - For 1-2 features: Full exhaustive subset search over all individual features.
+    - For 3+ features: Genetic algorithm with cluster-based tournament selection.
     """
 
     def __init__(self, config: GeneticConfig):
         self.config = config
         self.clusterer: Optional[FeatureCluster] = None
-        self.best_individuals: Dict[int, Dict[str, Any]] = {}
+        self.best_individuals: Dict[int, List[Dict[str, Any]]] = {}  # Store top K models per M features
         self.random_state = random.Random(config.random_state)
         np.random.seed(config.random_state)
 
@@ -115,121 +119,202 @@ class GeneticFeatureSelector:
         n_features: int,
         X: pd.DataFrame,
         y: pd.Series,
-    ) -> Optional[Dict[str, Any]]:
-        """Performs an exhaustive search for the best feature subset of a given size."""
+    ) -> List[Dict[str, Any]]:
+        """Performs an exhaustive search and returns top K feature subsets of given size."""
         if n_features > len(X.columns):
-            return None
+            return []
             
         all_combinations = list(itertools.combinations(X.columns, n_features))
         if self.config.verbose:
-            print(f"  Testing {len(all_combinations)} combinations for {n_features} feature(s)પૂર્ણ...")
+            print(f"  Testing {len(all_combinations)} combinations for {n_features} feature(s)...")
 
         results = Parallel(n_jobs=self.config.n_jobs)(
             delayed(self._calculate_fitness)(list(individual), X, y)
             for individual in all_combinations
         )
 
-        best_fitness = -np.inf
-        best_result = None
+        # Collect all valid results (those that pass QUIK rule if enabled)
+        valid_results = []
         primary_metric = self.config.fitness_functions[0]
 
         for i, fitness_scores in enumerate(results):
             score = fitness_scores.get(primary_metric, -np.inf)
-            if score > best_fitness:
-                best_fitness = score
-                best_result = {
+            if score > -np.inf:  # Valid fitness (passed QUIK rule)
+                valid_results.append({
                     "features": list(all_combinations[i]),
                     "fitness": fitness_scores,
-                }
-        return best_result
+                    "score": score
+                })
 
-    def _mutate_swap_only(self, individual: List[str]) -> List[str]:
-        """Performs a cluster-aware swap mutation, preserving feature count."""
-        if not self.clusterer or self.random_state.random() > self.config.mutation_rate:
-            return individual
-
-        mutated = individual.copy()
-        swap_idx = self.random_state.randrange(len(mutated))
-        current_feature = mutated[swap_idx]
-        current_cluster_id = self.clusterer.cludict.get(current_feature)
-
-        # Find a feature from a different cluster
-        available_clusters = [
-            i for i, features in enumerate(self.clusterer.cluster_info)
-            if features and (i + 1) != current_cluster_id
-        ]
-        if available_clusters:
-            new_cluster_idx = self.random_state.choice(available_clusters)
-            new_feature = self.random_state.choice(self.clusterer.cluster_info[new_cluster_idx])
-            mutated[swap_idx] = new_feature
-
-        return sorted(list(set(mutated)))
-
-    def _crossover_fixed_n(
-        self,
-        parent1: List[str],
-        parent2: List[str],
-        n_features: int,
-    ) -> Tuple[List[str], List[str]]:
-        """Performs crossover that preserves the feature count."""
-        combined_pool = sorted(list(set(parent1) | set(parent2)))
+        # Sort by primary fitness function and return top K
+        valid_results.sort(key=lambda x: x["score"], reverse=True)
+        top_k_results = valid_results[:self.config.top_k_models]
         
-        child1 = self.random_state.sample(combined_pool, min(n_features, len(combined_pool)))
-        child2 = self.random_state.sample(combined_pool, min(n_features, len(combined_pool)))
+        # Remove the temporary score field
+        for result in top_k_results:
+            del result["score"]
+            
+        if self.config.verbose:
+            print(f"  Found {len(valid_results)} valid models, keeping top {len(top_k_results)}")
+            
+        return top_k_results
 
-        return sorted(child1), sorted(child2)
 
-    def _run_ga_for_n_features(
+    def _cluster_based_population_init(self, n_features: int, X_features: List[str]) -> List[str]:
+        """Generate individual using cluster-based selection to ensure diversity."""
+        if not self.clusterer:
+            return self.random_state.sample(X_features, min(n_features, len(X_features)))
+        
+        selected_features = []
+        available_clusters = list(range(len(self.clusterer.cluster_info)))
+        
+        # First, select one feature from each cluster (if possible)
+        for _ in range(min(n_features, len(available_clusters))):
+            if not available_clusters:
+                break
+                
+            cluster_idx = self.random_state.choice(available_clusters)
+            cluster_features = [f for f in self.clusterer.cluster_info[cluster_idx] 
+                             if f in X_features and f not in selected_features]
+            
+            if cluster_features:
+                selected_feature = self.random_state.choice(cluster_features)
+                selected_features.append(selected_feature)
+                available_clusters.remove(cluster_idx)
+        
+        # Fill remaining slots with random features from any cluster
+        while len(selected_features) < n_features:
+            remaining_features = [f for f in X_features if f not in selected_features]
+            if not remaining_features:
+                break
+            selected_features.append(self.random_state.choice(remaining_features))
+        
+        return sorted(selected_features[:n_features])
+
+    def _run_cluster_based_ga(
         self,
         n_features: int,
         X: pd.DataFrame,
         y: pd.Series,
-    ) -> Optional[Dict[str, Any]]:
-        """Runs a dedicated GA to find the best model for a fixed number of features."""
+    ) -> List[Dict[str, Any]]:
+        """Runs cluster-based GA to find top K models for a fixed number of features."""
         if not self.clusterer:
             raise RuntimeError("Clusterer not initialized.")
 
-        # 1. Create initial population
+        X_features = list(X.columns)
+        
+        # 1. Create initial population using cluster-based initialization
         population: List[Tuple[List[str], Dict[str, float]]] = []
         attempts = 0
-        while len(population) < self.config.population_size and attempts < self.config.population_size * 5:
-            individual = sorted(list(set(self.random_state.sample(list(X.columns), n_features))))
+        max_attempts = self.config.population_size * 10
+        
+        while len(population) < self.config.population_size and attempts < max_attempts:
+            individual = self._cluster_based_population_init(n_features, X_features)
+            
+            # Avoid duplicates
             if individual not in [p[0] for p in population]:
                 fitness = self._calculate_fitness(individual, X, y)
-                population.append((individual, fitness))
+                # Only add if passes QUIK rule (fitness not -inf)
+                if fitness.get(self.config.fitness_functions[0], -np.inf) > -np.inf:
+                    population.append((individual, fitness))
             attempts += 1
         
         if not population:
-            warnings.warn(f"Could not create initial population for {n_features} features.")
-            return None
+            warnings.warn(f"Could not create valid initial population for {n_features} features.")
+            return []
 
-        # 2. Evolution loop
+        if self.config.verbose and len(population) < self.config.population_size:
+            print(f"    Generated {len(population)} valid individuals (target: {self.config.population_size})")
+
+        # 2. Evolution loop with cluster-aware breeding
         for generation in range(self.config.max_generations):
-            sorted_pop = sorted(
-                population,
+            # Sort by primary fitness function
+            population.sort(
                 key=lambda ind: ind[1].get(self.config.fitness_functions[0], -np.inf),
-                reverse=True,
+                reverse=True
             )
-            new_population = sorted_pop[: self.config.keep_best]
+            
+            # Keep best individuals
+            new_population = population[:self.config.keep_best]
 
+            # Generate offspring using cluster-aware crossover and mutation
             while len(new_population) < self.config.population_size:
                 parent1 = self._tournament_selection(population)
                 parent2 = self._tournament_selection(population)
-                child1, child2 = self._crossover_fixed_n(parent1, parent2, n_features)
-                child1 = self._mutate_swap_only(child1)
-                child2 = self._mutate_swap_only(child2)
+                
+                child1, child2 = self._cluster_aware_crossover(parent1, parent2, n_features, X_features)
+                child1 = self._cluster_aware_mutation(child1, X_features)
+                child2 = self._cluster_aware_mutation(child2, X_features)
 
                 for child in [child1, child2]:
                     if child and len(new_population) < self.config.population_size:
                         fitness = self._calculate_fitness(child, X, y)
-                        new_population.append((child, fitness))
+                        # Only add if passes QUIK rule
+                        if fitness.get(self.config.fitness_functions[0], -np.inf) > -np.inf:
+                            new_population.append((child, fitness))
+                
+                # Break if we can't generate more valid offspring
+                if len(new_population) == self.config.population_size or attempts > max_attempts:
+                    break
+                    
             population = new_population
 
-        # 3. Return best individual from the final population
-        best_individual = max(
-            population, key=lambda ind: ind[1].get(self.config.fitness_functions[0], -np.inf)
+        # 3. Return top K individuals from final population
+        population.sort(
+            key=lambda ind: ind[1].get(self.config.fitness_functions[0], -np.inf),
+            reverse=True
         )
-        return {"features": best_individual[0], "fitness": best_individual[1]}
+        
+        top_k_individuals = population[:self.config.top_k_models]
+        top_k_results = [
+            {"features": ind[0], "fitness": ind[1]} 
+            for ind in top_k_individuals
+        ]
+        
+        if self.config.verbose:
+            print(f"    Keeping top {len(top_k_results)} models from GA")
+        
+        return top_k_results
+
+    def _cluster_aware_crossover(self, parent1: List[str], parent2: List[str], 
+                               n_features: int, X_features: List[str]) -> Tuple[List[str], List[str]]:
+        """Crossover that respects cluster diversity."""
+        combined_features = list(set(parent1 + parent2))
+        
+        child1 = self._cluster_based_population_init(n_features, combined_features)
+        child2 = self._cluster_based_population_init(n_features, combined_features)
+        
+        return child1, child2
+
+    def _cluster_aware_mutation(self, individual: List[str], X_features: List[str]) -> List[str]:
+        """Mutation that maintains cluster diversity."""
+        if self.random_state.random() > self.config.mutation_rate:
+            return individual
+
+        if not individual or not self.clusterer:
+            return individual
+
+        mutated = individual.copy()
+        
+        # Choose a random feature to replace
+        replace_idx = self.random_state.randrange(len(mutated))
+        current_feature = mutated[replace_idx]
+        current_cluster_id = self.clusterer.cludict.get(current_feature)
+
+        # Find features from different clusters
+        different_cluster_features = []
+        for cluster_id, cluster_features in enumerate(self.clusterer.cluster_info):
+            if (cluster_id + 1) != current_cluster_id:
+                different_cluster_features.extend([
+                    f for f in cluster_features 
+                    if f in X_features and f not in mutated
+                ])
+
+        if different_cluster_features:
+            new_feature = self.random_state.choice(different_cluster_features)
+            mutated[replace_idx] = new_feature
+
+        return sorted(list(set(mutated)))
 
     def _tournament_selection(
         self,
@@ -247,13 +332,35 @@ class GeneticFeatureSelector:
         X: pd.DataFrame,
         y: pd.Series,
         clustering_config: Optional[Dict] = None,
-    ) -> Dict[int, Any]:
+    ) -> Dict[int, List[Dict[str, Any]]]:
         """
-        Runs the hybrid feature selection process.
+        Runs the GA-MLR feature selection process.
+        
+        Process:
+        1. Always cluster X columns first using cophenetic distance on correlation matrix
+        2. Automated cluster quality assessment for optimal cutoff
+        3. Exhaustive search for 1-2 features (manageable combinatorial load)
+        4. GA with cluster-based tournament selection for 3+ features
+        5. QUIK rule filtering during fitness evaluation
+        6. Returns top K models per M features
         """
+        n_samples = len(X)
+        max_vars_limit = max(1, n_samples // 5)  # Statistical bound: n/5
+        
+        if self.config.max_vars > max_vars_limit:
+            warnings.warn(
+                f"max_vars ({self.config.max_vars}) exceeds statistical bound (n/5 = {max_vars_limit}). "
+                f"Consider reducing max_vars for statistical validity."
+            )
+        
+        effective_max_vars = min(self.config.max_vars, max_vars_limit)
+        
         if self.config.verbose:
-            print("Starting hybrid feature selection...")
+            print("Starting GA-MLR feature selection...")
+            print(f"Dataset: {n_samples} samples, {len(X.columns)} features")
+            print(f"Max variables limit: {effective_max_vars} (statistical bound: n/5)")
 
+        # Always cluster X columns first using automated quality assessment
         self.clusterer = FeatureCluster(
             X,
             cut_d=self.config.clustering_distance,
@@ -261,27 +368,36 @@ class GeneticFeatureSelector:
             epsilon=self.config.epsilon,
             **(clustering_config or {}),
         )
-        self.clusterer.set_cluster(verbose=False) # Verbosity handled here
+        
+        # Use automated cutoff selection for optimal clustering
+        self.clusterer.set_cluster(verbose=self.config.verbose, auto_cutoff=True)
+        
+        if self.config.verbose:
+            n_clusters = len(self.clusterer.cluster_info)
+            print(f"Clustered {len(X.columns)} features into {n_clusters} clusters")
 
-        # --- Phase 1: Full Subset Search (1-2 features) ---
-        for n_vars in range(1, 3):
-            if n_vars > self.config.max_vars:
-                break
-            best_for_n = self._full_subset_search(n_vars, X, y)
-            if best_for_n:
-                self.best_individuals[n_vars] = best_for_n
-
-        # --- Phase 2: Genetic Algorithm (3+ features) ---
-        for n_vars in range(3, self.config.max_vars + 1):
+        # Phase 1: Full exhaustive subset search (1-2 features)
+        for n_vars in range(1, min(3, effective_max_vars + 1)):
             if self.config.verbose:
-                print(f"Running GA for {n_vars} features...")
-            best_for_n = self._run_ga_for_n_features(n_vars, X, y)
-            if best_for_n:
-                self.best_individuals[n_vars] = best_for_n
+                print(f"\nExhaustive search for {n_vars} features...")
+            top_models = self._full_subset_search(n_vars, X, y)
+            if top_models:
+                self.best_individuals[n_vars] = top_models
+
+        # Phase 2: GA with cluster-based tournament selection (3+ features)
+        for n_vars in range(3, effective_max_vars + 1):
+            if self.config.verbose:
+                print(f"\nRunning cluster-based GA for {n_vars} features...")
+            top_models = self._run_cluster_based_ga(n_vars, X, y)
+            if top_models:
+                self.best_individuals[n_vars] = top_models
 
         if self.config.verbose:
-            print("\nFeature selection completed.")
-            for n_vars, result in sorted(self.best_individuals.items()):
-                print(f"  Best model with {n_vars} vars: {result['fitness']}")
+            print("\nGA-MLR feature selection completed.")
+            for n_vars, models in sorted(self.best_individuals.items()):
+                print(f"  {n_vars} features: {len(models)} top models found")
+                for i, model in enumerate(models[:3]):  # Show top 3
+                    fitness_summary = {k: f"{v:.4f}" for k, v in model['fitness'].items()}
+                    print(f"    #{i+1}: {fitness_summary}")
 
         return self.best_individuals

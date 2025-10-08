@@ -14,17 +14,26 @@ from .ga import GeneticConfig, GeneticFeatureSelector
 
 from skopt import gp_minimize
 from skopt.space import Integer, Real
+from skopt.utils import use_named_args
 
 
 @dataclass
 class OptimizationConfig:
-    """Configuration for Bayesian optimization"""
+    """Configuration for hyperparameter optimization"""
+    # Bayesian optimization settings
     n_calls: int = 50
     n_initial_points: int = 10
     cv_folds: int = 3
     val_split: float = 0.2
     n_jobs: int = -1
     random_state: int = 42
+    
+    # Gradient-based optimization settings (for non-MLR models)
+    use_gradient_optimization: bool = False
+    max_iter: int = 100
+    learning_rate: float = 0.01
+    convergence_tol: float = 1e-6
+    n_cv_splits: int = 5
 
 
 class BaseModel(abc.ABC):
@@ -96,8 +105,15 @@ class BaseModel(abc.ABC):
             return X
 
     def _optimize_hyperparameters(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
-        """Enhanced hyperparameter optimization."""
-
+        """Enhanced hyperparameter optimization with gradient-based option for non-MLR models."""
+        
+        if self.optimization_config.use_gradient_optimization:
+            return self._gradient_based_optimization(X, y)
+        else:
+            return self._bayesian_optimization(X, y)
+    
+    def _bayesian_optimization(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
+        """Traditional Bayesian optimization using scikit-optimize."""
         param_space = self._get_param_space()
         objective = partial(self._objective_function, X=X, y=y)
 
@@ -115,6 +131,137 @@ class BaseModel(abc.ABC):
 
         best_params = dict(zip([p.name for p in param_space], result.x))
         return best_params
+    
+    def _gradient_based_optimization(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
+        """
+        Gradient-based hyperparameter optimization for non-MLR models.
+        Uses gradient descent on CV performance with parallelizable training.
+        """
+        from sklearn.model_selection import KFold
+        
+        param_space = self._get_param_space()
+        if not param_space:
+            return self.get_default_params()
+        
+        # Initialize parameters at default values
+        current_params = {}
+        param_bounds = {}
+        
+        for param in param_space:
+            if isinstance(param, Real):
+                # Start at geometric mean for log-uniform, arithmetic mean otherwise
+                if hasattr(param, 'prior') and param.prior == 'log-uniform':
+                    current_params[param.name] = np.exp((np.log(param.low) + np.log(param.high)) / 2)
+                else:
+                    current_params[param.name] = (param.low + param.high) / 2
+                param_bounds[param.name] = (param.low, param.high)
+            elif isinstance(param, Integer):
+                current_params[param.name] = int((param.low + param.high) / 2)
+                param_bounds[param.name] = (param.low, param.high)
+        
+        kf = KFold(n_splits=self.optimization_config.n_cv_splits, 
+                   shuffle=True, random_state=self.optimization_config.random_state)
+        
+        best_score = -np.inf
+        best_params = current_params.copy()
+        convergence_count = 0
+        
+        for iteration in range(self.optimization_config.max_iter):
+            # Evaluate current parameters
+            current_score = self._evaluate_params_cv(current_params, X, y, kf)
+            
+            if current_score > best_score:
+                best_score = current_score
+                best_params = current_params.copy()
+                convergence_count = 0
+            else:
+                convergence_count += 1
+            
+            # Check convergence
+            if convergence_count >= 10:  # Early stopping
+                break
+            
+            # Gradient approximation using finite differences
+            gradients = {}
+            step_sizes = {}
+            
+            for param_name in current_params:
+                if isinstance(param_space[[p.name for p in param_space].index(param_name)], Real):
+                    # Adaptive step size (smaller for log-uniform parameters)
+                    param_obj = param_space[[p.name for p in param_space].index(param_name)]
+                    if hasattr(param_obj, 'prior') and param_obj.prior == 'log-uniform':
+                        step_size = current_params[param_name] * 0.1
+                    else:
+                        step_size = (param_bounds[param_name][1] - param_bounds[param_name][0]) * 0.05
+                    step_sizes[param_name] = step_size
+                    
+                    # Forward difference
+                    perturbed_params = current_params.copy()
+                    perturbed_params[param_name] = min(
+                        param_bounds[param_name][1],
+                        current_params[param_name] + step_size
+                    )
+                    forward_score = self._evaluate_params_cv(perturbed_params, X, y, kf)
+                    
+                    gradients[param_name] = (forward_score - current_score) / step_size
+                elif isinstance(param_space[[p.name for p in param_space].index(param_name)], Integer):
+                    # For integer parameters, try ±1
+                    step_sizes[param_name] = 1
+                    
+                    perturbed_params = current_params.copy()
+                    perturbed_params[param_name] = min(
+                        param_bounds[param_name][1],
+                        current_params[param_name] + 1
+                    )
+                    forward_score = self._evaluate_params_cv(perturbed_params, X, y, kf)
+                    
+                    gradients[param_name] = forward_score - current_score
+            
+            # Update parameters using gradient ascent (maximizing score)
+            for param_name in current_params:
+                if gradients[param_name] != 0:
+                    if isinstance(param_space[[p.name for p in param_space].index(param_name)], Real):
+                        update = self.optimization_config.learning_rate * gradients[param_name]
+                        current_params[param_name] += update
+                        # Clip to bounds
+                        current_params[param_name] = np.clip(
+                            current_params[param_name],
+                            param_bounds[param_name][0],
+                            param_bounds[param_name][1]
+                        )
+                    elif isinstance(param_space[[p.name for p in param_space].index(param_name)], Integer):
+                        if gradients[param_name] > 0:
+                            current_params[param_name] = min(
+                                param_bounds[param_name][1],
+                                current_params[param_name] + 1
+                            )
+                        elif gradients[param_name] < 0:
+                            current_params[param_name] = max(
+                                param_bounds[param_name][0],
+                                current_params[param_name] - 1
+                            )
+        
+        self.best_score_ = best_score
+        self.optimization_history_ = []  # Not tracking full history for gradient method
+        
+        return best_params
+    
+    def _evaluate_params_cv(self, params: Dict[str, Any], X: np.ndarray, y: np.ndarray, kf) -> float:
+        """Evaluate parameter set using cross-validation."""
+        try:
+            scores = []
+            for train_idx, val_idx in kf.split(X):
+                X_train_cv, X_val_cv = X[train_idx], X[val_idx]
+                y_train_cv, y_val_cv = y[train_idx], y[val_idx]
+                
+                model = self._create_model(**params)
+                model.fit(X_train_cv, y_train_cv)
+                score = model.score(X_val_cv, y_val_cv)
+                scores.append(score)
+            
+            return np.mean(scores)
+        except Exception:
+            return -np.inf
 
     def _objective_function(self, params: list, X: np.ndarray, y: np.ndarray) -> float:
         """Enhanced objective function with statistical validation."""
