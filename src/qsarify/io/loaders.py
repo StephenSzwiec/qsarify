@@ -81,7 +81,7 @@ def load_csv_dataset(path: Path | str) -> DataSet:
     if raw.empty or len(raw) == 0:
         raise DataImportError("CSV file is empty or has no data rows")
 
-    if raw.shape[1] < 1:
+    if raw.shape[1] <= 1:
         raise DataImportError("CSV must have at least 2 columns")
 
     # ------------------------------------------------------------------ #
