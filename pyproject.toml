@@ -21,14 +21,15 @@ classifiers = [
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "blessed>=1.21.0",
     "color-science>=0.4.5",
+    "cycler>=0.12.1",
     "matplotlib>=3.10.3",
     "numpy>=2.3.1",
     "pandas>=2.3.0",
     "scikit-learn>=1.7.0",
     "scipy>=1.16.0",
     "seaborn>=0.13.2",
+    "textual>=8.1.1",
 ]
 
 [project.optional-dependencies]
@@ -36,12 +37,21 @@ dev = [
     "mypy",
     "pytest",
     "black",
+    "pandas-stubs",
+    "scipy-stubs",
 ]
+
+[[tool.mypy.overrides]]
+module = "sklearn.*, numpy.*"
+ignore_missing_imports = true
 
 [tool.hatch.build.targets.wheel]
 packages = [
     "src/qsarify",
 ]
+
+[tool.hatch.metadata] 
+allow-direct-references = true
 
 [tool.black]
 line-length = 88
@@ -53,6 +63,8 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_calls = true
 disallow_untyped_defs = true
+pretty = true 
+show_error_codes = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -71,6 +83,17 @@ qsarify = "qsarify:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "ipython>=9.11.0",
+    "mypy>=1.16.1",
+    "pandas-stubs>=3.0.0.260204",
+    "pytest>=8.4.1",
+    "ruff>=0.15.5",
+    "scipy-stubs>=1.17.1.1",
+]
 
 [project.urls]
 Homepage = "https://github.com/stephenszwiec/qsarify"
