@@ -31,7 +31,7 @@ from typing import Sequence
 import numpy as np
 from numpy.typing import NDArray
 
-from qsarify.modeling.base import SubsetModel
+from qsarify.modeling.subset_model import SubsetModel
 from qsarify.utils import statistics as stat
 
 __all__ = [
@@ -85,10 +85,7 @@ def init_chromosome(
     """
     cluster_ids = list(cluster_map.keys())
     chosen_clusters = rng.choice(cluster_ids, size=m, replace=False).tolist()
-    return [
-        (cid, int(rng.choice(cluster_map[cid])))
-        for cid in chosen_clusters
-    ]
+    return [(cid, int(rng.choice(cluster_map[cid]))) for cid in chosen_clusters]
 
 
 def init_population(
@@ -137,7 +134,6 @@ def decode_chromosome(chrom: Chromosome) -> list[int]:
 # ---------------------------------------------------------------------------
 # Fitness evaluation
 # ---------------------------------------------------------------------------
-
 
 
 def evaluate_fitness(
@@ -480,7 +476,9 @@ def enumerate_subsets(
                 chrom: Chromosome = list(zip(cluster_combo, desc_combo))
 
                 f = evaluate_fitness(
-                    chrom, X_train, y_train,
+                    chrom,
+                    X_train,
+                    y_train,
                     fitness_fn="q2_loo",
                     quik_delta=quik_delta,
                 )
@@ -595,14 +593,15 @@ def _build_scored_bank(
 
     if executor is not None:
         args_list = [
-            (chrom, X_train, y_train, fitness_fn, quik_delta)
-            for chrom in population
+            (chrom, X_train, y_train, fitness_fn, quik_delta) for chrom in population
         ]
         fitnesses: list[float] = list(executor.map(_fitness_worker_args, args_list))
     else:
         fitnesses = [
             evaluate_fitness(
-                chrom, X_train, y_train,
+                chrom,
+                X_train,
+                y_train,
                 fitness_fn=fitness_fn,
                 quik_delta=quik_delta,
             )
@@ -610,9 +609,7 @@ def _build_scored_bank(
         ]
 
     bank = [
-        (f, chrom)
-        for f, chrom in zip(fitnesses, population)
-        if f != _PENALTY_FITNESS
+        (f, chrom) for f, chrom in zip(fitnesses, population) if f != _PENALTY_FITNESS
     ]
     bank.sort(key=lambda x: x[0], reverse=True)
     return bank
@@ -726,9 +723,7 @@ def run_ga_mlr(
     all_best_models: list[SubsetModel] = []
 
     _ctx: ProcessPoolExecutor | nullcontext[None] = (  # type: ignore[type-arg]
-        ProcessPoolExecutor(max_workers=n_workers)
-        if n_workers > 0
-        else nullcontext()
+        ProcessPoolExecutor(max_workers=n_workers) if n_workers > 0 else nullcontext()
     )
 
     with _ctx as executor:
@@ -741,17 +736,27 @@ def run_ga_mlr(
 
             if total <= population_size:
                 # Full enumeration — no GA loop needed
-                initial_pop = list(_iter_cluster_diverse_chroms(m, cluster_ids, cluster_map))
+                initial_pop = list(
+                    _iter_cluster_diverse_chroms(m, cluster_ids, cluster_map)
+                )
                 bank: list[tuple[float, Chromosome]] = _build_scored_bank(
-                    initial_pop, X_train, y_train,
-                    fitness_function, quik_delta, executor,
+                    initial_pop,
+                    X_train,
+                    y_train,
+                    fitness_function,
+                    quik_delta,
+                    executor,
                 )
             else:
                 # Random init + evolutionary loop
                 population = init_population(m, cluster_map, population_size, rng)
                 bank = _build_scored_bank(
-                    population, X_train, y_train,
-                    fitness_function, quik_delta, executor,
+                    population,
+                    X_train,
+                    y_train,
+                    fitness_function,
+                    quik_delta,
+                    executor,
                 )
                 bank = bank[:population_size]
 
@@ -765,22 +770,46 @@ def run_ga_mlr(
                     # Generate offspring: tournament → crossover → mutate
                     offspring: list[Chromosome] = []
                     while len(offspring) < population_size:
-                        p1 = tournament_select(bank_chroms, bank_fits, tournament_size, rng)
-                        p2 = tournament_select(bank_chroms, bank_fits, tournament_size, rng)
-                        idx1 = next((i for i, c in enumerate(bank_chroms) if c is p1), 0)
-                        idx2 = next((i for i, c in enumerate(bank_chroms) if c is p2), 0)
+                        p1 = tournament_select(
+                            bank_chroms, bank_fits, tournament_size, rng
+                        )
+                        p2 = tournament_select(
+                            bank_chroms, bank_fits, tournament_size, rng
+                        )
+                        idx1 = next(
+                            (i for i, c in enumerate(bank_chroms) if c is p1), 0
+                        )
+                        idx2 = next(
+                            (i for i, c in enumerate(bank_chroms) if c is p2), 0
+                        )
                         f1 = bank_fits[idx1]
                         f2 = bank_fits[idx2]
                         c1, c2 = crossover(p1, p2, f1, f2, cluster_map, rng)
-                        c1 = mutate(c1, cluster_map, mutation_rate, inter_cluster_mutation_ratio, rng)
-                        c2 = mutate(c2, cluster_map, mutation_rate, inter_cluster_mutation_ratio, rng)
+                        c1 = mutate(
+                            c1,
+                            cluster_map,
+                            mutation_rate,
+                            inter_cluster_mutation_ratio,
+                            rng,
+                        )
+                        c2 = mutate(
+                            c2,
+                            cluster_map,
+                            mutation_rate,
+                            inter_cluster_mutation_ratio,
+                            rng,
+                        )
                         offspring.append(c1)
                         if len(offspring) < population_size:
                             offspring.append(c2)
 
                     offspring_bank = _build_scored_bank(
-                        offspring, X_train, y_train,
-                        fitness_function, quik_delta, executor,
+                        offspring,
+                        X_train,
+                        y_train,
+                        fitness_function,
+                        quik_delta,
+                        executor,
                     )
                     # Merge, sort descending, crop to population_size
                     bank = bank + offspring_bank

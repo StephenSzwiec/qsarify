@@ -316,7 +316,13 @@ class SVRConfigModal(ModalScreen[dict | None]):
         except ValueError:
             C = 1.0
         gamma_raw = self.query_one("#gamma", Input).value.strip()
-        gamma: str | float = gamma_raw if gamma_raw in ("scale", "auto") else float(gamma_raw) if gamma_raw else "scale"
+        gamma: str | float = (
+            gamma_raw
+            if gamma_raw in ("scale", "auto")
+            else float(gamma_raw)
+            if gamma_raw
+            else "scale"
+        )
         kernel_val = self.query_one("#kernel", Select).value
         kernel = str(kernel_val) if kernel_val else "rbf"
         self.dismiss({"C": C, "gamma": gamma, "kernel": kernel})

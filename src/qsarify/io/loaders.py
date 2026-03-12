@@ -118,7 +118,9 @@ def load_csv_dataset(path: Path | str) -> DataSet:
     try:
         X_df = X_raw.apply(pd.to_numeric, errors="coerce")
     except Exception as exc:  # noqa: BLE001
-        raise DataImportError(f"Failed to convert descriptor columns to numeric: {exc}") from exc
+        raise DataImportError(
+            f"Failed to convert descriptor columns to numeric: {exc}"
+        ) from exc
 
     if X_df.isnull().any().any():
         raise DataImportError(
@@ -128,7 +130,9 @@ def load_csv_dataset(path: Path | str) -> DataSet:
     try:
         y_series = pd.to_numeric(y_raw, errors="coerce")
     except Exception as exc:  # noqa: BLE001
-        raise DataImportError(f"Failed to convert response column to numeric: {exc}") from exc
+        raise DataImportError(
+            f"Failed to convert response column to numeric: {exc}"
+        ) from exc
 
     if y_series.isnull().any():
         raise DataImportError(

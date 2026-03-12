@@ -27,7 +27,6 @@ import math
 from typing import Final
 
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 from cycler import cycler as mpl_cycler
 import numpy as np
 
@@ -50,13 +49,13 @@ __all__ = [
 #: Colors distinguish deuteranopia, protanopia, and tritanopia; they also
 #: remain distinct in grayscale.
 OKABE_ITO: Final[dict[str, str]] = {
-    "black":          "#000000",
-    "orange":         "#E69F00",
-    "sky_blue":       "#56B4E9",
-    "bluish_green":   "#009E73",
-    "yellow":         "#F0E442",
-    "blue":           "#0072B2",
-    "vermillion":     "#D55E00",
+    "black": "#000000",
+    "orange": "#E69F00",
+    "sky_blue": "#56B4E9",
+    "bluish_green": "#009E73",
+    "yellow": "#F0E442",
+    "blue": "#0072B2",
+    "vermillion": "#D55E00",
     "reddish_purple": "#CC79A7",
 }
 
@@ -93,8 +92,8 @@ def _linear_to_srgb(c: float) -> float:
 # sRGB primaries, D65 white point (IEC 61966-2-1)
 _M_RGB_TO_XYZ: Final = np.array(
     [
-        [0.4123907992659595,  0.357584339383878,  0.1804807884018343],
-        [0.21263900587151027, 0.715168678767756,  0.07219231536073371],
+        [0.4123907992659595, 0.357584339383878, 0.1804807884018343],
+        [0.21263900587151027, 0.715168678767756, 0.07219231536073371],
         [0.01933081871559182, 0.11919477979462598, 0.9505321522496607],
     ],
     dtype=np.float64,
@@ -102,9 +101,9 @@ _M_RGB_TO_XYZ: Final = np.array(
 
 _M_XYZ_TO_RGB: Final = np.array(
     [
-        [ 3.2409699419045226, -1.5373831775700939, -0.4986107602930034],
-        [-0.9692436362808796,  1.8759675015077202,  0.04155505740717559],
-        [ 0.05563007981249285, -0.20397695888897654, 1.0569715142428786],
+        [3.2409699419045226, -1.5373831775700939, -0.4986107602930034],
+        [-0.9692436362808796, 1.8759675015077202, 0.04155505740717559],
+        [0.05563007981249285, -0.20397695888897654, 1.0569715142428786],
     ],
     dtype=np.float64,
 )
@@ -117,9 +116,9 @@ _M_XYZ_TO_RGB: Final = np.array(
 # Step 1: XYZ → LMS (non-linear cone-like space)
 _M1: Final = np.array(
     [
-        [ 0.8189330101,  0.3618667424, -0.1288597137],
-        [ 0.0329845436,  0.9293118715,  0.0361456387],
-        [ 0.0482003018,  0.2643662691,  0.6338517070],
+        [0.8189330101, 0.3618667424, -0.1288597137],
+        [0.0329845436, 0.9293118715, 0.0361456387],
+        [0.0482003018, 0.2643662691, 0.6338517070],
     ],
     dtype=np.float64,
 )
@@ -127,9 +126,9 @@ _M1: Final = np.array(
 # Step 2: LMS^(1/3) → OKLab
 _M2: Final = np.array(
     [
-        [0.2104542553,  0.7936177850, -0.0040720468],
-        [1.9779984951, -2.4285922050,  0.4505937099],
-        [0.0259040371,  0.7827717662, -0.8086757660],
+        [0.2104542553, 0.7936177850, -0.0040720468],
+        [1.9779984951, -2.4285922050, 0.4505937099],
+        [0.0259040371, 0.7827717662, -0.8086757660],
     ],
     dtype=np.float64,
 )
@@ -137,16 +136,16 @@ _M2: Final = np.array(
 # Inverses (pre-computed; verified against numpy.linalg.inv)
 _M1_INV: Final = np.array(
     [
-        [ 1.2270138511035211, -0.5577999806518222,  0.2812561489664678],
-        [-0.0405801784232806,  1.1122568696168302, -0.0716766786656012],
-        [-0.0763812845057069, -0.4214819784180127,  1.5861632204407947],
+        [1.2270138511035211, -0.5577999806518222, 0.2812561489664678],
+        [-0.0405801784232806, 1.1122568696168302, -0.0716766786656012],
+        [-0.0763812845057069, -0.4214819784180127, 1.5861632204407947],
     ],
     dtype=np.float64,
 )
 
 _M2_INV: Final = np.array(
     [
-        [1.0,  0.3963377774,  0.2158037573],
+        [1.0, 0.3963377774, 0.2158037573],
         [1.0, -0.1055613458, -0.0638541728],
         [1.0, -0.0894841775, -1.2914855480],
     ],
@@ -159,7 +158,9 @@ _M2_INV: Final = np.array(
 # ---------------------------------------------------------------------------
 
 
-def hex_to_rgba(hex_color: str, alpha: float = 1.0) -> tuple[float, float, float, float]:
+def hex_to_rgba(
+    hex_color: str, alpha: float = 1.0
+) -> tuple[float, float, float, float]:
     """Convert a CSS hex color string to a normalized RGBA tuple.
 
     Parameters
@@ -228,7 +229,7 @@ def rgba_to_oklch(
     a_val = float(lab[1])
     b_val = float(lab[2])
 
-    C = math.sqrt(a_val ** 2 + b_val ** 2)
+    C = math.sqrt(a_val**2 + b_val**2)
     H_rad = math.atan2(b_val, a_val)
     H_deg = math.degrees(H_rad) % 360.0  # normalise to [0, 360)
 
@@ -268,7 +269,7 @@ def oklch_to_rgba(
     lms_cbrt = _M2_INV @ lab
 
     # LMS^(1/3) → LMS  (cube)
-    lms = lms_cbrt ** 3
+    lms = lms_cbrt**3
 
     # LMS → XYZ
     xyz = _M1_INV @ lms
@@ -347,44 +348,55 @@ def apply_qsarify_style() -> None:
     """
     # Color cycle: Okabe-Ito (excluding black as default cycle start to avoid
     # invisible points on white backgrounds; black is still available explicitly)
-    color_cycle = [OKABE_ITO[k] for k in (
-        "orange", "sky_blue", "bluish_green", "blue",
-        "vermillion", "reddish_purple", "yellow", "black",
-    )]
+    color_cycle = [
+        OKABE_ITO[k]
+        for k in (
+            "orange",
+            "sky_blue",
+            "bluish_green",
+            "blue",
+            "vermillion",
+            "reddish_purple",
+            "yellow",
+            "black",
+        )
+    ]
 
-    mpl.rcParams.update({
-        # Color cycle
-        "axes.prop_cycle": mpl_cycler(color=color_cycle),
-        # Backgrounds
-        "figure.facecolor": "white",
-        "axes.facecolor": "white",
-        # Spines
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "axes.edgecolor": "#333333",
-        # Grid
-        "axes.grid": True,
-        "grid.color": "#E0E0E0",
-        "grid.linewidth": 0.5,
-        "grid.alpha": 0.7,
-        # Font sizes
-        "axes.titlesize": 12,
-        "axes.labelsize": 11,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
-        "legend.fontsize": 10,
-        # Lines and markers
-        "lines.linewidth": 1.5,
-        "lines.markersize": 5,
-        # DPI
-        "figure.dpi": 100,
-        "savefig.dpi": 300,
-        # Layout
-        "figure.autolayout": True,
-        "savefig.bbox": "tight",
-        # Font family (prefer a system font that renders cleanly at small sizes)
-        "font.family": "sans-serif",
-    })
+    mpl.rcParams.update(
+        {
+            # Color cycle
+            "axes.prop_cycle": mpl_cycler(color=color_cycle),
+            # Backgrounds
+            "figure.facecolor": "white",
+            "axes.facecolor": "white",
+            # Spines
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.edgecolor": "#333333",
+            # Grid
+            "axes.grid": True,
+            "grid.color": "#E0E0E0",
+            "grid.linewidth": 0.5,
+            "grid.alpha": 0.7,
+            # Font sizes
+            "axes.titlesize": 12,
+            "axes.labelsize": 11,
+            "xtick.labelsize": 10,
+            "ytick.labelsize": 10,
+            "legend.fontsize": 10,
+            # Lines and markers
+            "lines.linewidth": 1.5,
+            "lines.markersize": 5,
+            # DPI
+            "figure.dpi": 100,
+            "savefig.dpi": 300,
+            # Layout
+            "figure.autolayout": True,
+            "savefig.bbox": "tight",
+            # Font family (prefer a system font that renders cleanly at small sizes)
+            "font.family": "sans-serif",
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

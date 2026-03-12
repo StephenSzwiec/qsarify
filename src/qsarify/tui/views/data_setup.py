@@ -134,7 +134,9 @@ class DataSetupScreen(Screen[None]):
         split_val = self.query_one("#split-method", Select).value
         split_method = str(split_val) if split_val else "random"
 
-        self._run_configure(y_col, x_cols_selected, norm_x, norm_y, test_size, split_method)
+        self._run_configure(
+            y_col, x_cols_selected, norm_x, norm_y, test_size, split_method
+        )
 
     @work(thread=True)
     def _run_configure(

@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import math
 
-import numpy as np
 import pytest
 
 from qsarify.viz.style import (
@@ -31,8 +29,16 @@ def test_palette_list_matches_dict():
 
 
 def test_okabe_ito_named_colors_present():
-    for name in ("black", "orange", "sky_blue", "bluish_green", "yellow", "blue",
-                 "vermillion", "reddish_purple"):
+    for name in (
+        "black",
+        "orange",
+        "sky_blue",
+        "bluish_green",
+        "yellow",
+        "blue",
+        "vermillion",
+        "reddish_purple",
+    ):
         assert name in OKABE_ITO
 
 
@@ -159,9 +165,15 @@ def test_rgba_oklch_roundtrip():
         r0, g0, b0, _ = hex_to_rgba(hex_color)
         L, C, H = rgba_to_oklch(r0, g0, b0)
         r1, g1, b1, _ = oklch_to_rgba(L, C, H)
-        assert r1 == pytest.approx(r0, abs=1 / 255 + 1e-4), f"R mismatch for {hex_color}"
-        assert g1 == pytest.approx(g0, abs=1 / 255 + 1e-4), f"G mismatch for {hex_color}"
-        assert b1 == pytest.approx(b0, abs=1 / 255 + 1e-4), f"B mismatch for {hex_color}"
+        assert r1 == pytest.approx(r0, abs=1 / 255 + 1e-4), (
+            f"R mismatch for {hex_color}"
+        )
+        assert g1 == pytest.approx(g0, abs=1 / 255 + 1e-4), (
+            f"G mismatch for {hex_color}"
+        )
+        assert b1 == pytest.approx(b0, abs=1 / 255 + 1e-4), (
+            f"B mismatch for {hex_color}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -217,7 +229,9 @@ def test_cmyk_all_channels_in_range():
         r, g, b, _ = hex_to_rgba(hex_color)
         c, m, y_ch, k = rgba_to_cmyk(r, g, b)
         for ch_name, ch_val in [("C", c), ("M", m), ("Y", y_ch), ("K", k)]:
-            assert 0.0 <= ch_val <= 1.0, f"{ch_name}={ch_val} out of [0,1] for {hex_color}"
+            assert 0.0 <= ch_val <= 1.0, (
+                f"{ch_name}={ch_val} out of [0,1] for {hex_color}"
+            )
 
 
 def test_cmyk_with_alpha_ignored():

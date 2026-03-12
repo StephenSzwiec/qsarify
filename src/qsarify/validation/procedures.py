@@ -242,8 +242,7 @@ def run_lmo(
 
     y_train_mean = float(y_arr.mean())
     args_list = [
-        (estimator, X_arr, y_arr, _holdout_indices(s), y_train_mean)
-        for s in iter_seeds
+        (estimator, X_arr, y_arr, _holdout_indices(s), y_train_mean) for s in iter_seeds
     ]
 
     if n_workers == 1:

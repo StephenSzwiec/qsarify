@@ -1,10 +1,9 @@
 """Unit tests for qsarify.modeling.base.SubsetModel (OLS/MLR)."""
 
 import numpy as np
-import pytest
 from numpy.testing import assert_allclose
 
-from qsarify.modeling.base import SubsetModel
+from qsarify.modeling.subset_model import SubsetModel
 from qsarify.results.model_result import ModelResult
 
 
@@ -18,7 +17,12 @@ N, P = 40, 5
 X_ALL = RNG.standard_normal((N, P))
 TRUE_COEF = np.array([1.0, -2.0, 0.5])  # true coefficients for descriptors 0,2,4
 NOISE = RNG.standard_normal(N) * 0.1
-Y = X_ALL[:, 0] * TRUE_COEF[0] + X_ALL[:, 2] * TRUE_COEF[1] + X_ALL[:, 4] * TRUE_COEF[2] + NOISE
+Y = (
+    X_ALL[:, 0] * TRUE_COEF[0]
+    + X_ALL[:, 2] * TRUE_COEF[1]
+    + X_ALL[:, 4] * TRUE_COEF[2]
+    + NOISE
+)
 
 INDICES = [0, 2, 4]  # select 3 out of 5 descriptors
 
@@ -121,7 +125,13 @@ def test_external_metrics_none_without_test() -> None:
     model = SubsetModel(INDICES)
     model.fit(X_ALL, Y)
     r = model.get_results()
-    for attr in ("q_squared_f1", "q_squared_f2", "q_squared_f3", "r_squared_ext", "press_ext"):
+    for attr in (
+        "q_squared_f1",
+        "q_squared_f2",
+        "q_squared_f3",
+        "r_squared_ext",
+        "press_ext",
+    ):
         assert getattr(r, attr) is None, f"{attr} should be None without test set"
 
 
@@ -255,7 +265,13 @@ def test_external_metrics_populated_with_test() -> None:
     model = SubsetModel(INDICES)
     model.fit(X_ALL, Y, X_test=X_TEST, y_test=Y_TEST)
     r = model.get_results()
-    for attr in ("q_squared_f1", "q_squared_f2", "q_squared_f3", "r_squared_ext", "press_ext"):
+    for attr in (
+        "q_squared_f1",
+        "q_squared_f2",
+        "q_squared_f3",
+        "r_squared_ext",
+        "press_ext",
+    ):
         assert getattr(r, attr) is not None, f"{attr} should be set with test data"
 
 

@@ -132,10 +132,18 @@ def test_lmo_stats_consistent(linear_data):
         n_iterations=10,
         random_seed=7,
     )
-    assert result.mean_q2 == pytest.approx(float(np.mean(result.q2_per_iteration)), abs=1e-10)
-    assert result.std_q2 == pytest.approx(float(np.std(result.q2_per_iteration)), abs=1e-10)
-    assert result.mean_r2 == pytest.approx(float(np.mean(result.r2_per_iteration)), abs=1e-10)
-    assert result.mean_rmse == pytest.approx(float(np.mean(result.rmse_per_iteration)), abs=1e-10)
+    assert result.mean_q2 == pytest.approx(
+        float(np.mean(result.q2_per_iteration)), abs=1e-10
+    )
+    assert result.std_q2 == pytest.approx(
+        float(np.std(result.q2_per_iteration)), abs=1e-10
+    )
+    assert result.mean_r2 == pytest.approx(
+        float(np.mean(result.r2_per_iteration)), abs=1e-10
+    )
+    assert result.mean_rmse == pytest.approx(
+        float(np.mean(result.rmse_per_iteration)), abs=1e-10
+    )
 
 
 def test_lmo_deterministic_with_seed(linear_data):
@@ -154,14 +162,23 @@ def test_lmo_different_seeds_differ(linear_data):
 
 def test_lmo_works_with_ridge(linear_data):
     X, y = linear_data
-    result = run_lmo(Ridge(alpha=0.1), X, y, holdout_fraction=0.20, n_iterations=5, random_seed=0)
+    result = run_lmo(
+        Ridge(alpha=0.1), X, y, holdout_fraction=0.20, n_iterations=5, random_seed=0
+    )
     assert result.mean_q2 > 0.0
 
 
 def test_lmo_all_holdout_fractions(linear_data):
     X, y = linear_data
     for frac in [0.20, 0.30, 0.33]:
-        result = run_lmo(LinearRegression(), X, y, holdout_fraction=frac, n_iterations=5, random_seed=0)
+        result = run_lmo(
+            LinearRegression(),
+            X,
+            y,
+            holdout_fraction=frac,
+            n_iterations=5,
+            random_seed=0,
+        )
         assert result.holdout_fraction == pytest.approx(frac)
         assert len(result.q2_per_iteration) == 5
 
@@ -196,9 +213,13 @@ def test_y_scrambling_result_fields():
 def test_y_scrambling_returns_result(linear_data):
     X, y = linear_data
     result = run_y_scrambling(
-        LinearRegression(), X, y,
-        r2_original=0.95, q2_original=0.90,
-        n_iterations=100, random_seed=0,
+        LinearRegression(),
+        X,
+        y,
+        r2_original=0.95,
+        q2_original=0.90,
+        n_iterations=100,
+        random_seed=0,
     )
     assert isinstance(result, YScramblingResult)
 
@@ -206,9 +227,13 @@ def test_y_scrambling_returns_result(linear_data):
 def test_y_scrambling_iteration_count(linear_data):
     X, y = linear_data
     result = run_y_scrambling(
-        LinearRegression(), X, y,
-        r2_original=0.95, q2_original=0.90,
-        n_iterations=100, random_seed=0,
+        LinearRegression(),
+        X,
+        y,
+        r2_original=0.95,
+        q2_original=0.90,
+        n_iterations=100,
+        random_seed=0,
     )
     assert result.n_iterations == 100
     assert len(result.r2_scrambled) == 100
@@ -223,9 +248,13 @@ def test_y_scrambling_r2_much_lower_than_original(linear_data):
     r2_orig = float(1.0 - np.sum((y - y_pred) ** 2) / np.sum((y - np.mean(y)) ** 2))
 
     result = run_y_scrambling(
-        LinearRegression(), X, y,
-        r2_original=r2_orig, q2_original=0.9,
-        n_iterations=100, random_seed=42,
+        LinearRegression(),
+        X,
+        y,
+        r2_original=r2_orig,
+        q2_original=0.9,
+        n_iterations=100,
+        random_seed=42,
     )
     assert result.mean_r2_scrambled < r2_orig - 0.50
 
@@ -234,9 +263,13 @@ def test_y_scrambling_q2_much_lower_than_original(linear_data):
     """100-iteration scrambling: mean scrambled Q²_LOO must be far below original."""
     X, y = linear_data
     result = run_y_scrambling(
-        LinearRegression(), X, y,
-        r2_original=0.98, q2_original=0.97,
-        n_iterations=100, random_seed=42,
+        LinearRegression(),
+        X,
+        y,
+        r2_original=0.98,
+        q2_original=0.97,
+        n_iterations=100,
+        random_seed=42,
     )
     assert result.mean_q2_scrambled < result.q2_original - 0.50
 
@@ -244,9 +277,13 @@ def test_y_scrambling_q2_much_lower_than_original(linear_data):
 def test_y_scrambling_original_values_stored(linear_data):
     X, y = linear_data
     result = run_y_scrambling(
-        LinearRegression(), X, y,
-        r2_original=0.95, q2_original=0.88,
-        n_iterations=100, random_seed=0,
+        LinearRegression(),
+        X,
+        y,
+        r2_original=0.95,
+        q2_original=0.88,
+        n_iterations=100,
+        random_seed=0,
     )
     assert result.r2_original == pytest.approx(0.95)
     assert result.q2_original == pytest.approx(0.88)
@@ -255,14 +292,26 @@ def test_y_scrambling_original_values_stored(linear_data):
 def test_y_scrambling_stats_consistent(linear_data):
     X, y = linear_data
     result = run_y_scrambling(
-        LinearRegression(), X, y,
-        r2_original=0.95, q2_original=0.90,
-        n_iterations=100, random_seed=0,
+        LinearRegression(),
+        X,
+        y,
+        r2_original=0.95,
+        q2_original=0.90,
+        n_iterations=100,
+        random_seed=0,
     )
-    assert result.mean_r2_scrambled == pytest.approx(float(np.mean(result.r2_scrambled)), abs=1e-10)
-    assert result.std_r2_scrambled == pytest.approx(float(np.std(result.r2_scrambled)), abs=1e-10)
-    assert result.mean_q2_scrambled == pytest.approx(float(np.mean(result.q2_scrambled)), abs=1e-10)
-    assert result.std_q2_scrambled == pytest.approx(float(np.std(result.q2_scrambled)), abs=1e-10)
+    assert result.mean_r2_scrambled == pytest.approx(
+        float(np.mean(result.r2_scrambled)), abs=1e-10
+    )
+    assert result.std_r2_scrambled == pytest.approx(
+        float(np.std(result.r2_scrambled)), abs=1e-10
+    )
+    assert result.mean_q2_scrambled == pytest.approx(
+        float(np.mean(result.q2_scrambled)), abs=1e-10
+    )
+    assert result.std_q2_scrambled == pytest.approx(
+        float(np.std(result.q2_scrambled)), abs=1e-10
+    )
 
 
 def test_y_scrambling_deterministic_with_seed(linear_data):
@@ -276,10 +325,24 @@ def test_y_scrambling_deterministic_with_seed(linear_data):
 
 def test_y_scrambling_different_seeds_differ(linear_data):
     X, y = linear_data
-    r1 = run_y_scrambling(LinearRegression(), X, y, r2_original=0.9, q2_original=0.85,
-                          n_iterations=100, random_seed=1)
-    r2 = run_y_scrambling(LinearRegression(), X, y, r2_original=0.9, q2_original=0.85,
-                          n_iterations=100, random_seed=2)
+    r1 = run_y_scrambling(
+        LinearRegression(),
+        X,
+        y,
+        r2_original=0.9,
+        q2_original=0.85,
+        n_iterations=100,
+        random_seed=1,
+    )
+    r2 = run_y_scrambling(
+        LinearRegression(),
+        X,
+        y,
+        r2_original=0.9,
+        q2_original=0.85,
+        n_iterations=100,
+        random_seed=2,
+    )
     assert not np.allclose(r1.r2_scrambled, r2.r2_scrambled)
 
 
@@ -291,9 +354,13 @@ def test_y_scrambling_scrambled_r2_all_below_original(linear_data):
     r2_orig = float(1.0 - np.sum((y - y_pred) ** 2) / np.sum((y - np.mean(y)) ** 2))
 
     result = run_y_scrambling(
-        LinearRegression(), X, y,
-        r2_original=r2_orig, q2_original=0.9,
-        n_iterations=100, random_seed=0,
+        LinearRegression(),
+        X,
+        y,
+        r2_original=r2_orig,
+        q2_original=0.9,
+        n_iterations=100,
+        random_seed=0,
     )
     # On this strong linear dataset, every scrambled model should be much worse
     assert np.all(result.r2_scrambled < r2_orig - 0.20)

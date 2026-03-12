@@ -200,23 +200,44 @@ def plot_residuals(
     is_normal = ~is_outlier
 
     ax_use.scatter(
-        y_pred[is_normal], std_resid[is_normal],
-        color=_COLOR_POINTS, alpha=0.75, s=40, zorder=3,
+        y_pred[is_normal],
+        std_resid[is_normal],
+        color=_COLOR_POINTS,
+        alpha=0.75,
+        s=40,
+        zorder=3,
         label="Observations",
     )
     if is_outlier.any():
         ax_use.scatter(
-            y_pred[is_outlier], std_resid[is_outlier],
-            color=_COLOR_OUTLIER, alpha=0.9, s=55, marker="^", zorder=4,
+            y_pred[is_outlier],
+            std_resid[is_outlier],
+            color=_COLOR_OUTLIER,
+            alpha=0.9,
+            s=55,
+            marker="^",
+            zorder=4,
             label=f"|z| > {_STD_RESID_THRESHOLD}",
         )
 
     # Reference lines
     ax_use.axhline(0.0, color=_COLOR_HLINE, linewidth=1.0, linestyle="--", zorder=2)
-    ax_use.axhline( _STD_RESID_THRESHOLD, color=_COLOR_HLINE, linewidth=0.7,
-                    linestyle=":", alpha=0.5, zorder=2)
-    ax_use.axhline(-_STD_RESID_THRESHOLD, color=_COLOR_HLINE, linewidth=0.7,
-                    linestyle=":", alpha=0.5, zorder=2)
+    ax_use.axhline(
+        _STD_RESID_THRESHOLD,
+        color=_COLOR_HLINE,
+        linewidth=0.7,
+        linestyle=":",
+        alpha=0.5,
+        zorder=2,
+    )
+    ax_use.axhline(
+        -_STD_RESID_THRESHOLD,
+        color=_COLOR_HLINE,
+        linewidth=0.7,
+        linestyle=":",
+        alpha=0.5,
+        zorder=2,
+    )
 
     ax_use.set_xlabel("Fitted values")
     ax_use.set_ylabel("Standardised residuals")
@@ -275,16 +296,24 @@ def plot_qq(
 
     # Sample quantile points
     ax_use.scatter(
-        theoretical_q, sample_q,
-        color=_COLOR_POINTS, alpha=0.75, s=40, zorder=3,
+        theoretical_q,
+        sample_q,
+        color=_COLOR_POINTS,
+        alpha=0.75,
+        s=40,
+        zorder=3,
         label="Sample quantiles",
     )
 
     # Reference line (fitted through the data by scipy.stats.probplot)
     x_ref = np.array([theoretical_q.min(), theoretical_q.max()])
     ax_use.plot(
-        x_ref, slope * x_ref + intercept,
-        color=_COLOR_REF_LINE, linewidth=1.5, linestyle="--", zorder=2,
+        x_ref,
+        slope * x_ref + intercept,
+        color=_COLOR_REF_LINE,
+        linewidth=1.5,
+        linestyle="--",
+        zorder=2,
         label="Reference line",
     )
 
@@ -351,28 +380,53 @@ def plot_williams(
     out_ad = ~in_ad
 
     ax_use.scatter(
-        leverage[in_ad], std_resid[in_ad],
-        color=_COLOR_POINTS, alpha=0.75, s=40, zorder=3,
+        leverage[in_ad],
+        std_resid[in_ad],
+        color=_COLOR_POINTS,
+        alpha=0.75,
+        s=40,
+        zorder=3,
         label="Within AD",
     )
     if out_ad.any():
         ax_use.scatter(
-            leverage[out_ad], std_resid[out_ad],
-            color=_COLOR_OUTLIER, alpha=0.9, s=55, marker="^", zorder=4,
+            leverage[out_ad],
+            std_resid[out_ad],
+            color=_COLOR_OUTLIER,
+            alpha=0.9,
+            s=55,
+            marker="^",
+            zorder=4,
             label="Outside AD",
         )
 
     # h* vertical threshold line
     ax_use.axvline(
-        h_star, color=_COLOR_VLINE, linewidth=1.5, linestyle="--", zorder=2,
+        h_star,
+        color=_COLOR_VLINE,
+        linewidth=1.5,
+        linestyle="--",
+        zorder=2,
         label=f"h* = {h_star:.3f}",
     )
 
     # ±3 horizontal threshold lines
-    ax_use.axhline( _STD_RESID_THRESHOLD, color=_COLOR_HLINE, linewidth=0.8,
-                    linestyle=":", alpha=0.6, zorder=2)
-    ax_use.axhline(-_STD_RESID_THRESHOLD, color=_COLOR_HLINE, linewidth=0.8,
-                    linestyle=":", alpha=0.6, zorder=2)
+    ax_use.axhline(
+        _STD_RESID_THRESHOLD,
+        color=_COLOR_HLINE,
+        linewidth=0.8,
+        linestyle=":",
+        alpha=0.6,
+        zorder=2,
+    )
+    ax_use.axhline(
+        -_STD_RESID_THRESHOLD,
+        color=_COLOR_HLINE,
+        linewidth=0.8,
+        linestyle=":",
+        alpha=0.6,
+        zorder=2,
+    )
     ax_use.axhline(0.0, color=_COLOR_HLINE, linewidth=0.5, linestyle="-", alpha=0.3)
 
     ax_use.set_xlabel("Leverage $h_i$")
@@ -438,12 +492,19 @@ def plot_y_scrambling(
     # ── R² panel ──────────────────────────────────────────────────────────
     ax_r2.hist(
         y_scram_result.r2_scrambled,
-        bins=n_bins, color=_COLOR_HIST_SCRAM, edgecolor="white",
-        linewidth=0.5, alpha=0.85, label=f"Scrambled (n={y_scram_result.n_iterations})",
+        bins=n_bins,
+        color=_COLOR_HIST_SCRAM,
+        edgecolor="white",
+        linewidth=0.5,
+        alpha=0.85,
+        label=f"Scrambled (n={y_scram_result.n_iterations})",
     )
     ax_r2.axvline(
         y_scram_result.r2_original,
-        color=_COLOR_ORIG, linewidth=2.0, linestyle="--", zorder=5,
+        color=_COLOR_ORIG,
+        linewidth=2.0,
+        linestyle="--",
+        zorder=5,
         label=f"Original R² = {y_scram_result.r2_original:.3f}",
     )
     ax_r2.set_xlabel("R² (scrambled models)")
@@ -454,12 +515,19 @@ def plot_y_scrambling(
     # ── Q²_LOO panel ──────────────────────────────────────────────────────
     ax_q2.hist(
         y_scram_result.q2_scrambled,
-        bins=n_bins, color=_COLOR_HIST_SCRAM, edgecolor="white",
-        linewidth=0.5, alpha=0.85, label=f"Scrambled (n={y_scram_result.n_iterations})",
+        bins=n_bins,
+        color=_COLOR_HIST_SCRAM,
+        edgecolor="white",
+        linewidth=0.5,
+        alpha=0.85,
+        label=f"Scrambled (n={y_scram_result.n_iterations})",
     )
     ax_q2.axvline(
         y_scram_result.q2_original,
-        color=_COLOR_ORIG, linewidth=2.0, linestyle="--", zorder=5,
+        color=_COLOR_ORIG,
+        linewidth=2.0,
+        linestyle="--",
+        zorder=5,
         label=f"Original Q²_LOO = {y_scram_result.q2_original:.3f}",
     )
     ax_q2.set_xlabel("Q²_LOO (scrambled models)")

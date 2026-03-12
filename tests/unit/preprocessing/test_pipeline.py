@@ -129,7 +129,9 @@ def test_normalize_false_preserves_scale() -> None:
     n = 20
     X = pd.DataFrame({"a": np.arange(1.0, n + 1), "b": np.arange(2.0, n + 2)})
     y = pd.Series(np.arange(float(n)), name="y")
-    X_tr, X_te, _, _ = preprocessing(X, y, normalize=False, split="random", random_seed=0)
+    X_tr, X_te, _, _ = preprocessing(
+        X, y, normalize=False, split="random", random_seed=0
+    )
     combined = pd.concat([X_tr, X_te])
     assert combined["a"].min() >= 1.0
     assert combined["a"].max() <= float(n)

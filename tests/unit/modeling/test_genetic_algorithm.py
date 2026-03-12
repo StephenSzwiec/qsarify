@@ -7,11 +7,9 @@ selection, and the full GA loop are verified with smoke tests.
 
 from __future__ import annotations
 
-import itertools
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from qsarify.modeling.genetic_algorithm import (
     Chromosome,
@@ -170,7 +168,9 @@ def test_mutation_diversity_invariant_100_trials() -> None:
     violations = 0
     for _ in range(100):
         chrom = init_chromosome(3, CLUSTER_MAP, rng)
-        mutated = mutate(chrom, CLUSTER_MAP, mutation_rate=1.0, inter_ratio=0.7, rng=rng)
+        mutated = mutate(
+            chrom, CLUSTER_MAP, mutation_rate=1.0, inter_ratio=0.7, rng=rng
+        )
         if not has_unique_clusters(mutated):
             violations += 1
     assert violations == 0, f"{violations} diversity violations in mutation"
@@ -308,10 +308,11 @@ def test_exhaustive_enum_diversity_invariant() -> None:
 
 
 def test_run_ga_mlr_returns_subset_models() -> None:
-    from qsarify.modeling.base import SubsetModel
+    from qsarify.modeling.subset_model import SubsetModel
 
     models = run_ga_mlr(
-        X_TRAIN, Y_TRAIN,
+        X_TRAIN,
+        Y_TRAIN,
         CLUSTER_MAP,
         min_variables=1,
         max_variables=3,
@@ -331,7 +332,8 @@ def test_run_ga_mlr_returns_subset_models() -> None:
 
 def test_run_ga_mlr_results_not_none() -> None:
     models = run_ga_mlr(
-        X_TRAIN, Y_TRAIN,
+        X_TRAIN,
+        Y_TRAIN,
         CLUSTER_MAP,
         min_variables=2,
         max_variables=2,
@@ -354,7 +356,8 @@ def test_run_ga_mlr_results_not_none() -> None:
 def test_run_ga_mlr_finds_good_model() -> None:
     """GA should find a model with decent Q²_LOO on signal-heavy data."""
     models = run_ga_mlr(
-        X_TRAIN, Y_TRAIN,
+        X_TRAIN,
+        Y_TRAIN,
         CLUSTER_MAP,
         min_variables=3,
         max_variables=3,

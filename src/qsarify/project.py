@@ -40,7 +40,10 @@ from qsarify.modeling.models import (
     RidgeModel,
     SVRModel,
 )
-from qsarify.preprocessing.filters import remove_high_correlation, remove_near_zero_variance
+from qsarify.preprocessing.filters import (
+    remove_high_correlation,
+    remove_near_zero_variance,
+)
 from qsarify.preprocessing.scalers import StandardScaler
 from qsarify.preprocessing.splitters import random_split, stratified_split
 from qsarify.results.model_result import ModelResult
@@ -127,7 +130,9 @@ def _make_estimator(model_type: str, hyperparameters: dict[str, Any]) -> Any:
             learning_rate=float(hyperparameters.get("learning_rate", 0.1)),
             max_depth=int(hyperparameters.get("max_depth", 3)),
         )
-    raise WorkflowError(f"Unknown model_type '{model_type}' for estimator reconstruction.")
+    raise WorkflowError(
+        f"Unknown model_type '{model_type}' for estimator reconstruction."
+    )
 
 
 def _X_for_validation(
@@ -198,12 +203,16 @@ class QSARProject:
         checkpoint_path: Path | str | None = None,
     ) -> None:
         self.random_seed: int | None = random_seed
-        self.checkpoint_path: Path | None = Path(checkpoint_path) if checkpoint_path else None
+        self.checkpoint_path: Path | None = (
+            Path(checkpoint_path) if checkpoint_path else None
+        )
         self.state: ProjectState = ProjectState.EMPTY
 
         # --- Data storage ---
         self.dataset: DataSet | None = None
-        self._X_work: pd.DataFrame | None = None  # filtered X (after filter_descriptors)
+        self._X_work: pd.DataFrame | None = (
+            None  # filtered X (after filter_descriptors)
+        )
         self.descriptor_names: list[str] = []
 
         self.X_train: NDArray[np.float64] | None = None
@@ -345,8 +354,12 @@ class QSARProject:
         """
         self._require_state(ProjectState.DATA_IMPORTED, "filter_descriptors")
         assert self._X_work is not None
-        self._X_work = remove_near_zero_variance(self._X_work, threshold=constant_threshold)
-        self._X_work = remove_high_correlation(self._X_work, threshold=correlation_threshold)
+        self._X_work = remove_near_zero_variance(
+            self._X_work, threshold=constant_threshold
+        )
+        self._X_work = remove_high_correlation(
+            self._X_work, threshold=correlation_threshold
+        )
         self._config["constant_threshold"] = constant_threshold
         self._config["correlation_threshold"] = correlation_threshold
 
@@ -436,8 +449,7 @@ class QSARProject:
             X_tr, X_te, y_tr, y_te = stratified_split(X, y, test_size=test_size)
         else:
             raise WorkflowError(
-                f"Unknown split_method '{split_method}'. "
-                "Use 'random' or 'stratified'."
+                f"Unknown split_method '{split_method}'. Use 'random' or 'stratified'."
             )
 
         self.descriptor_names = list(X.columns)
@@ -817,7 +829,9 @@ class QSARProject:
             X_val = _X_for_validation(self.X_train, result)
 
             r2_original = result.r_squared if result.r_squared is not None else 0.0
-            q2_original = result.q_squared_loo if result.q_squared_loo is not None else 0.0
+            q2_original = (
+                result.q_squared_loo if result.q_squared_loo is not None else 0.0
+            )
 
             y_scram_result = run_y_scrambling(
                 estimator,

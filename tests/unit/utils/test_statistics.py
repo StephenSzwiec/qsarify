@@ -5,7 +5,6 @@ against scikit-learn reference implementations where applicable.
 """
 
 import numpy as np
-import pytest
 from numpy.testing import assert_allclose
 
 from qsarify.utils.statistics import (
@@ -378,14 +377,18 @@ _Y_REG = _X_REG @ _COEF_REG + _RNG_REG.standard_normal(_N_REG) * 0.3
 
 
 def test_ridge_coef_stats_returns_arrays() -> None:
-    std_err, ci, p_vals = regularized_coef_stats(_X_REG, _Y_REG, _COEF_REG, 1.0, "ridge")
+    std_err, ci, p_vals = regularized_coef_stats(
+        _X_REG, _Y_REG, _COEF_REG, 1.0, "ridge"
+    )
     assert std_err is not None
     assert ci is not None
     assert p_vals is not None
 
 
 def test_ridge_coef_stats_shapes() -> None:
-    std_err, ci, p_vals = regularized_coef_stats(_X_REG, _Y_REG, _COEF_REG, 1.0, "ridge")
+    std_err, ci, p_vals = regularized_coef_stats(
+        _X_REG, _Y_REG, _COEF_REG, 1.0, "ridge"
+    )
     assert std_err is not None and std_err.shape == (_P_REG,)
     assert ci is not None and ci.shape == (_P_REG, 2)
     assert p_vals is not None and p_vals.shape == (_P_REG,)
@@ -405,7 +408,9 @@ def test_ridge_coef_stats_p_values_in_range() -> None:
 
 def test_lasso_coef_stats_active_set() -> None:
     """Lasso stats should return non-None for non-zero coefficients."""
-    std_err, ci, p_vals = regularized_coef_stats(_X_REG, _Y_REG, _COEF_REG, 0.01, "lasso")
+    std_err, ci, p_vals = regularized_coef_stats(
+        _X_REG, _Y_REG, _COEF_REG, 0.01, "lasso"
+    )
     # All coef are non-zero so active set = all; should return arrays
     assert std_err is not None
     assert std_err.shape == (_P_REG,)
@@ -414,7 +419,9 @@ def test_lasso_coef_stats_active_set() -> None:
 def test_lasso_all_zero_returns_none() -> None:
     """All-zero Lasso coef → None stats."""
     zero_coef = np.zeros(_P_REG)
-    std_err, ci, p_vals = regularized_coef_stats(_X_REG, _Y_REG, zero_coef, 100.0, "lasso")
+    std_err, ci, p_vals = regularized_coef_stats(
+        _X_REG, _Y_REG, zero_coef, 100.0, "lasso"
+    )
     assert std_err is None
     assert ci is None
     assert p_vals is None
@@ -467,14 +474,14 @@ def test_k_prime_slope() -> None:
 
 def test_r_squared_0() -> None:
     num = np.sum((Y_TRUE - Y_PRED) ** 2)
-    denom = np.sum(Y_TRUE ** 2)
+    denom = np.sum(Y_TRUE**2)
     expected = 1.0 - num / denom
     assert_allclose(r_squared_0(Y_TRUE, Y_PRED), expected)
 
 
 def test_r_squared_0_prime() -> None:
     num = np.sum((Y_TRUE - Y_PRED) ** 2)
-    denom = np.sum(Y_PRED ** 2)
+    denom = np.sum(Y_PRED**2)
     expected = 1.0 - num / denom
     assert_allclose(r_squared_0_prime(Y_TRUE, Y_PRED), expected)
 

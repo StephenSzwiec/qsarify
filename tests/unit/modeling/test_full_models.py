@@ -24,12 +24,20 @@ RNG = np.random.default_rng(42)
 N_TRAIN, P = 60, 5
 
 X_TRAIN = RNG.standard_normal((N_TRAIN, P))
-Y_TRAIN = X_TRAIN[:, 0] * 2.0 - X_TRAIN[:, 2] * 1.5 + 0.5 + RNG.standard_normal(N_TRAIN) * 0.3
+Y_TRAIN = (
+    X_TRAIN[:, 0] * 2.0 - X_TRAIN[:, 2] * 1.5 + 0.5 + RNG.standard_normal(N_TRAIN) * 0.3
+)
 
 X_TEST = RNG.standard_normal((15, P))
 Y_TEST = X_TEST[:, 0] * 2.0 - X_TEST[:, 2] * 1.5 + 0.5 + RNG.standard_normal(15) * 0.3
 
-ALL_MODEL_CLASSES = [RidgeModel, LassoModel, SVRModel, RandomForestModel, GradientBoostingModel]
+ALL_MODEL_CLASSES = [
+    RidgeModel,
+    LassoModel,
+    SVRModel,
+    RandomForestModel,
+    GradientBoostingModel,
+]
 LINEAR_CLASSES = [RidgeModel, LassoModel]
 NONLINEAR_CLASSES = [SVRModel, RandomForestModel, GradientBoostingModel]
 
@@ -87,8 +95,14 @@ def test_training_metrics_populated(cls: type) -> None:
     model.fit(X_TRAIN, Y_TRAIN)
     r = model.get_results()
     for attr in (
-        "r_squared", "r_squared_adj", "rmse", "mae", "q_squared_loo",
-        "leverage", "std_residuals", "leverage_threshold",
+        "r_squared",
+        "r_squared_adj",
+        "rmse",
+        "mae",
+        "q_squared_loo",
+        "leverage",
+        "std_residuals",
+        "leverage_threshold",
     ):
         assert getattr(r, attr) is not None, f"{cls.__name__}: {attr} is None"
 
@@ -98,8 +112,16 @@ def test_external_metrics_populated_with_test(cls: type) -> None:
     model = cls()
     model.fit(X_TRAIN, Y_TRAIN, X_test=X_TEST, y_test=Y_TEST)
     r = model.get_results()
-    for attr in ("q_squared_f1", "q_squared_f2", "q_squared_f3", "r_squared_ext", "press_ext"):
-        assert getattr(r, attr) is not None, f"{cls.__name__}: {attr} is None with test set"
+    for attr in (
+        "q_squared_f1",
+        "q_squared_f2",
+        "q_squared_f3",
+        "r_squared_ext",
+        "press_ext",
+    ):
+        assert getattr(r, attr) is not None, (
+            f"{cls.__name__}: {attr} is None with test set"
+        )
 
 
 @pytest.mark.parametrize("cls", ALL_MODEL_CLASSES)
@@ -107,8 +129,16 @@ def test_external_metrics_none_without_test(cls: type) -> None:
     model = cls()
     model.fit(X_TRAIN, Y_TRAIN)
     r = model.get_results()
-    for attr in ("q_squared_f1", "q_squared_f2", "q_squared_f3", "r_squared_ext", "press_ext"):
-        assert getattr(r, attr) is None, f"{cls.__name__}: {attr} should be None without test"
+    for attr in (
+        "q_squared_f1",
+        "q_squared_f2",
+        "q_squared_f3",
+        "r_squared_ext",
+        "press_ext",
+    ):
+        assert getattr(r, attr) is None, (
+            f"{cls.__name__}: {attr} should be None without test"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -254,8 +284,13 @@ def test_lasso_stores_alpha_in_hyperparameters() -> None:
 def test_ridge_de_optimization_stores_float_alpha() -> None:
     """With DE, the optimized alpha (float) must be stored in hyperparameters."""
     model = RidgeModel(random_seed=42)
-    model.fit(X_TRAIN, Y_TRAIN, fitness_function="q2_loo",
-              population_size=8, max_generations=5)
+    model.fit(
+        X_TRAIN,
+        Y_TRAIN,
+        fitness_function="q2_loo",
+        population_size=8,
+        max_generations=5,
+    )
     hp = model.get_results().hyperparameters
     assert "alpha" in hp
     assert isinstance(hp["alpha"], float)
@@ -264,8 +299,13 @@ def test_ridge_de_optimization_stores_float_alpha() -> None:
 def test_svr_de_optimization_stores_c_gamma() -> None:
     """With DE, SVR must store optimized C and gamma in hyperparameters."""
     model = SVRModel(random_seed=42)
-    model.fit(X_TRAIN, Y_TRAIN, fitness_function="q2_loo",
-              population_size=4, max_generations=3)
+    model.fit(
+        X_TRAIN,
+        Y_TRAIN,
+        fitness_function="q2_loo",
+        population_size=4,
+        max_generations=3,
+    )
     hp = model.get_results().hyperparameters
     assert "C" in hp and "gamma" in hp
     assert isinstance(hp["C"], float) and isinstance(hp["gamma"], float)
@@ -279,25 +319,43 @@ def test_svr_de_optimization_stores_c_gamma() -> None:
 def test_head_to_head_returns_result_set() -> None:
     from qsarify.results.result_set import ResultSet
 
-    rs = head_to_head(X_TRAIN, X_TEST, Y_TRAIN, Y_TEST,
-                      fitness_function="q2_loo",
-                      population_size=4, max_generations=3)
+    rs = head_to_head(
+        X_TRAIN,
+        X_TEST,
+        Y_TRAIN,
+        Y_TEST,
+        fitness_function="q2_loo",
+        population_size=4,
+        max_generations=3,
+    )
     assert isinstance(rs, ResultSet)
     assert len(rs) == 5  # Ridge, Lasso, SVR, RF, GBM
 
 
 def test_head_to_head_all_model_types_present() -> None:
-    rs = head_to_head(X_TRAIN, X_TEST, Y_TRAIN, Y_TEST,
-                      fitness_function="q2_loo",
-                      population_size=4, max_generations=3)
+    rs = head_to_head(
+        X_TRAIN,
+        X_TEST,
+        Y_TRAIN,
+        Y_TEST,
+        fitness_function="q2_loo",
+        population_size=4,
+        max_generations=3,
+    )
     types = {r.model_type for r in rs}
     assert types == {"ridge", "lasso", "svr", "rf", "gbr"}
 
 
 def test_head_to_head_external_metrics_populated() -> None:
-    rs = head_to_head(X_TRAIN, X_TEST, Y_TRAIN, Y_TEST,
-                      fitness_function="q2_loo",
-                      population_size=4, max_generations=3)
+    rs = head_to_head(
+        X_TRAIN,
+        X_TEST,
+        Y_TRAIN,
+        Y_TEST,
+        fitness_function="q2_loo",
+        population_size=4,
+        max_generations=3,
+    )
     for r in rs:
         assert r.q_squared_f1 is not None, f"{r.model_type}: q_squared_f1 is None"
         assert r.r_squared_ext is not None

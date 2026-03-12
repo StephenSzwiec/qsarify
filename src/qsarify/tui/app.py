@@ -16,11 +16,9 @@ Navigation follows the FSM directly:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
 
-from textual.app import App, ComposeResult
+from textual.app import App
 from textual.binding import Binding
-from textual.widgets import Footer, Header
 
 from qsarify.project import ProjectState, QSARProject
 
@@ -182,7 +180,6 @@ class QSARifyApp(App[None]):
         """Push the canonical screen for *state*, clearing the stack first."""
         # Import lazily to avoid circular deps and speed startup
         from qsarify.tui.views.data_import import DataImportScreen
-        from qsarify.tui.views.data_setup import DataSetupScreen
         from qsarify.tui.views.model_building import ModelBuildingScreen
         from qsarify.tui.views.results import ResultsScreen
         from qsarify.tui.views.welcome import WelcomeScreen

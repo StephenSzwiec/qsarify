@@ -1,7 +1,6 @@
 """Unit tests for qsarify.modeling.clustering."""
 
 import numpy as np
-import pytest
 from numpy.testing import assert_allclose
 
 from qsarify.modeling.clustering import (
@@ -91,7 +90,7 @@ def test_cohesion_score_penalizes_unequal_sizes() -> None:
         ],
         dtype=np.float64,
     )
-    equal_labels   = np.array([1, 1, 2, 2], dtype=np.int32)  # sizes [2, 2] → H_norm = 1
+    equal_labels = np.array([1, 1, 2, 2], dtype=np.int32)  # sizes [2, 2] → H_norm = 1
     unequal_labels = np.array([1, 1, 1, 2], dtype=np.int32)  # sizes [3, 1] → H_norm < 1
     assert cohesion_score(abs_R, equal_labels) > cohesion_score(abs_R, unequal_labels)
 
@@ -107,9 +106,11 @@ def test_cohesion_score_penalizes_degenerate_cases() -> None:
         ],
         dtype=np.float64,
     )
-    all_one        = np.ones(4, dtype=np.int32)               # k=1  → H_norm = 0
-    two_pairs      = np.array([1, 1, 2, 2], dtype=np.int32)  # good partition
-    all_singletons = np.array([1, 2, 3, 4], dtype=np.int32)  # k=4, all size-1 → mean_cohesion = 0
+    all_one = np.ones(4, dtype=np.int32)  # k=1  → H_norm = 0
+    two_pairs = np.array([1, 1, 2, 2], dtype=np.int32)  # good partition
+    all_singletons = np.array(
+        [1, 2, 3, 4], dtype=np.int32
+    )  # k=4, all size-1 → mean_cohesion = 0
 
     assert cohesion_score(abs_R, all_one) == 0.0
     assert cohesion_score(abs_R, all_singletons) == 0.0

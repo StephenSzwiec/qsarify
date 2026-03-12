@@ -271,9 +271,7 @@ class ResultsScreen(Screen[None]):
                 break
 
     @work(thread=True)
-    def _worker_plot(
-        self, result: object, plot_type: str, output_path: str
-    ) -> None:
+    def _worker_plot(self, result: object, plot_type: str, output_path: str) -> None:
         from qsarify.results.model_result import ModelResult
         from qsarify.viz.plots import plot_qq, plot_residuals, plot_williams
 
@@ -319,9 +317,7 @@ class ResultsScreen(Screen[None]):
                 return
             path_str = output_path
             self.app.call_from_thread(
-                lambda: self.notify(
-                    f"Saved to {path_str}", title="Plot generated"
-                )
+                lambda: self.notify(f"Saved to {path_str}", title="Plot generated")
             )
         except Exception as exc:
             msg = str(exc)

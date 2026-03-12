@@ -230,7 +230,9 @@ def cophenetic_cluster(
         )
 
     # Step 1: Pearson correlation matrix of columns
-    R: NDArray[np.float64] = np.asarray(np.corrcoef(X_arr, rowvar=False), dtype=np.float64)
+    R: NDArray[np.float64] = np.asarray(
+        np.corrcoef(X_arr, rowvar=False), dtype=np.float64
+    )
 
     # Absolute correlation — reused for distance matrix and cohesion scoring
     abs_R: NDArray[np.float64] = np.abs(R)
@@ -342,9 +344,9 @@ def _auto_cut_d(
     best_score = -np.inf
 
     for cut in candidates:
-        labels: NDArray[np.int32] = fcluster(Z, float(cut), criterion="distance").astype(
-            np.int32
-        )
+        labels: NDArray[np.int32] = fcluster(
+            Z, float(cut), criterion="distance"
+        ).astype(np.int32)
         n_k = len(np.unique(labels))
         if n_k < min_clusters:
             continue

@@ -11,7 +11,6 @@ Tests cover:
 
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -227,7 +226,9 @@ def test_build_ridge_from_data_imported_raises(sample_csv: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_build_ridge_transitions_to_models_built(configured_project: QSARProject) -> None:
+def test_build_ridge_transitions_to_models_built(
+    configured_project: QSARProject,
+) -> None:
     configured_project.build_ridge(alpha=1.0)
     assert configured_project.state == ProjectState.MODELS_BUILT
 
@@ -238,7 +239,9 @@ def test_build_ridge_adds_to_result_set(configured_project: QSARProject) -> None
     assert configured_project.result_set[0].model_type == "ridge"
 
 
-def test_build_lasso_transitions_to_models_built(configured_project: QSARProject) -> None:
+def test_build_lasso_transitions_to_models_built(
+    configured_project: QSARProject,
+) -> None:
     configured_project.build_lasso(alpha=0.1)
     assert configured_project.state == ProjectState.MODELS_BUILT
 
@@ -255,7 +258,9 @@ def test_build_svr_transitions_to_models_built(configured_project: QSARProject) 
     assert configured_project.state == ProjectState.MODELS_BUILT
 
 
-def test_build_random_forest_transitions_to_models_built(configured_project: QSARProject) -> None:
+def test_build_random_forest_transitions_to_models_built(
+    configured_project: QSARProject,
+) -> None:
     configured_project.build_random_forest(n_estimators=10)
     assert configured_project.state == ProjectState.MODELS_BUILT
 
@@ -267,7 +272,9 @@ def test_build_gradient_boosting_transitions_to_models_built(
     assert configured_project.state == ProjectState.MODELS_BUILT
 
 
-def test_build_ga_mlr_transitions_to_models_built(configured_project: QSARProject) -> None:
+def test_build_ga_mlr_transitions_to_models_built(
+    configured_project: QSARProject,
+) -> None:
     configured_project.build_ga_mlr(
         max_variables=2,
         population_size=10,
@@ -289,7 +296,9 @@ def test_run_lmo_from_data_configured_raises(configured_project: QSARProject) ->
         configured_project.run_lmo_validation([])
 
 
-def test_run_y_scrambling_from_data_configured_raises(configured_project: QSARProject) -> None:
+def test_run_y_scrambling_from_data_configured_raises(
+    configured_project: QSARProject,
+) -> None:
     with pytest.raises(WorkflowError):
         configured_project.run_y_scrambling([])
 
@@ -399,7 +408,9 @@ def test_save_load_result_count_round_trip(
     assert len(loaded.result_set) == len(built_project.result_set)
 
 
-def test_save_load_arrays_round_trip(built_project: QSARProject, tmp_path: Path) -> None:
+def test_save_load_arrays_round_trip(
+    built_project: QSARProject, tmp_path: Path
+) -> None:
     save_path = tmp_path / "project.sqlite3"
     built_project.save(save_path)
     loaded = QSARProject.load(save_path)
@@ -409,7 +420,9 @@ def test_save_load_arrays_round_trip(built_project: QSARProject, tmp_path: Path)
     np.testing.assert_array_almost_equal(loaded.y_train, built_project.y_train)  # type: ignore[arg-type]
 
 
-def test_save_load_preserves_random_seed(built_project: QSARProject, tmp_path: Path) -> None:
+def test_save_load_preserves_random_seed(
+    built_project: QSARProject, tmp_path: Path
+) -> None:
     save_path = tmp_path / "project.sqlite3"
     built_project.save(save_path)
     loaded = QSARProject.load(save_path)

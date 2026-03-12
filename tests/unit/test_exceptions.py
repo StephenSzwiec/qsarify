@@ -17,7 +17,13 @@ def test_base_exception_is_exception() -> None:
 
 
 def test_all_subclasses_inherit_base() -> None:
-    for cls in (DataImportError, ModelFitError, ValidationError, WorkflowError, PersistenceError):
+    for cls in (
+        DataImportError,
+        ModelFitError,
+        ValidationError,
+        WorkflowError,
+        PersistenceError,
+    ):
         assert issubclass(cls, QSARifyError)
 
 

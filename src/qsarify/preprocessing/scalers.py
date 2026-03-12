@@ -13,7 +13,6 @@ interface.  Calling ``transform`` before ``fit`` raises :class:`RuntimeError`.
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
 __all__ = ["StandardScaler", "MinMaxScaler"]
@@ -96,7 +95,9 @@ class StandardScaler:
             If called before :meth:`fit`.
         """
         if self._mean is None or self._std is None:
-            raise RuntimeError("StandardScaler must be fit before calling inverse_transform")
+            raise RuntimeError(
+                "StandardScaler must be fit before calling inverse_transform"
+            )
         std = self._std.replace(0.0, 1.0)
         return X * std + self._mean
 
@@ -183,7 +184,9 @@ class MinMaxScaler:
             If called before :meth:`fit`.
         """
         if self._min is None or self._max is None:
-            raise RuntimeError("MinMaxScaler must be fit before calling inverse_transform")
+            raise RuntimeError(
+                "MinMaxScaler must be fit before calling inverse_transform"
+            )
         lo, hi = self.feature_range
         scale = self._max - self._min
         scale = scale.replace(0.0, 1.0)

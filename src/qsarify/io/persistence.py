@@ -34,10 +34,9 @@ from numpy.typing import NDArray
 from qsarify.exceptions import PersistenceError
 from qsarify.io.loaders import DataSet
 from qsarify.results.model_result import ModelResult
-from qsarify.results.result_set import ResultSet
 
 if TYPE_CHECKING:
-    from qsarify.project import QSARProject, ProjectState
+    from qsarify.project import QSARProject
 
 __all__ = ["save_project", "load_project"]
 
@@ -197,7 +196,12 @@ def save_project(project: "QSARProject", path: Path) -> None:
         cur.executescript(_CREATE_SCHEMA)
 
         # Clear existing rows (full overwrite semantics)
-        for tbl in ("project_meta", "project_arrays", "model_results", "model_result_arrays"):
+        for tbl in (
+            "project_meta",
+            "project_arrays",
+            "model_results",
+            "model_result_arrays",
+        ):
             cur.execute(f"DELETE FROM {tbl}")  # noqa: S608 — controlled table names
 
         # -- project_meta -------------------------------------------------
@@ -362,8 +366,7 @@ def load_project(path: Path) -> "QSARProject":
             # cluster_assignments (descriptor_index → cluster_id).
             if scalars.get("cluster_assignments") is not None:
                 scalars["cluster_assignments"] = {
-                    int(k): int(v)
-                    for k, v in scalars["cluster_assignments"].items()
+                    int(k): int(v) for k, v in scalars["cluster_assignments"].items()
                 }
 
             arr_fields = arrays_by_idx.get(idx, {})

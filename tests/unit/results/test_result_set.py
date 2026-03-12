@@ -123,22 +123,26 @@ def test_sort_unknown_field_raises():
 
 
 def test_filter_by_model_type():
-    rs = ResultSet(results=[
-        _make_result(model_type="mlr"),
-        _make_result(model_type="ridge"),
-        _make_result(model_type="mlr"),
-    ])
+    rs = ResultSet(
+        results=[
+            _make_result(model_type="mlr"),
+            _make_result(model_type="ridge"),
+            _make_result(model_type="mlr"),
+        ]
+    )
     filtered = rs.filter(model_type="mlr")
     assert len(filtered) == 2
     assert all(r.model_type == "mlr" for r in filtered)
 
 
 def test_filter_by_n_features():
-    rs = ResultSet(results=[
-        _make_result(n_features=2),
-        _make_result(n_features=3),
-        _make_result(n_features=2),
-    ])
+    rs = ResultSet(
+        results=[
+            _make_result(n_features=2),
+            _make_result(n_features=3),
+            _make_result(n_features=2),
+        ]
+    )
     filtered = rs.filter(n_features=2)
     assert len(filtered) == 2
 
@@ -164,11 +168,13 @@ def test_filter_max_rmse():
 
 
 def test_filter_combined():
-    rs = ResultSet(results=[
-        _make_result(model_type="mlr", r2=0.9, rmse=0.05),
-        _make_result(model_type="ridge", r2=0.9, rmse=0.05),
-        _make_result(model_type="mlr", r2=0.6, rmse=0.20),
-    ])
+    rs = ResultSet(
+        results=[
+            _make_result(model_type="mlr", r2=0.9, rmse=0.05),
+            _make_result(model_type="ridge", r2=0.9, rmse=0.05),
+            _make_result(model_type="mlr", r2=0.6, rmse=0.20),
+        ]
+    )
     filtered = rs.filter(model_type="mlr", min_r_squared=0.8)
     assert len(filtered) == 1
 

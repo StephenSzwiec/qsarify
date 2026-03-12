@@ -453,7 +453,12 @@ def ols_hat_loo(
     press_val = float(np.sum((residuals / denom) ** 2))
     tss_val = tss(y_arr)
     q2_val = 1.0 - press_val / tss_val if tss_val > 0.0 else 0.0
-    return LOOResult(q2_loo=float(q2_val), y_pred=y_pred_arr, y_pred_loo=y_pred_loo_arr, press=press_val)
+    return LOOResult(
+        q2_loo=float(q2_val),
+        y_pred=y_pred_arr,
+        y_pred_loo=y_pred_loo_arr,
+        press=press_val,
+    )
 
 
 def sklearn_loo(
@@ -504,7 +509,12 @@ def sklearn_loo(
     press_val = float(np.sum((y_arr - y_pred_loo_arr) ** 2))
     tss_val = tss(y_arr)
     q2_val = 1.0 - press_val / tss_val if tss_val > 0.0 else 0.0
-    return LOOResult(q2_loo=float(q2_val), y_pred=y_pred_arr, y_pred_loo=y_pred_loo_arr, press=press_val)
+    return LOOResult(
+        q2_loo=float(q2_val),
+        y_pred=y_pred_arr,
+        y_pred_loo=y_pred_loo_arr,
+        press=press_val,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -587,7 +597,9 @@ def regularized_coef_stats(
     s2 = rss_val / df_resid
 
     if model_type == "ridge":
-        XtX_reg_inv = np.asarray(np.linalg.pinv(X.T @ X + alpha * np.eye(p)), dtype=np.float64)
+        XtX_reg_inv = np.asarray(
+            np.linalg.pinv(X.T @ X + alpha * np.eye(p)), dtype=np.float64
+        )
         coef_var: NDArray[np.float64] = np.diag(XtX_reg_inv) * s2
         std_err: NDArray[np.float64] = np.sqrt(np.clip(coef_var, 0.0, None))
         df = df_resid
@@ -612,12 +624,18 @@ def regularized_coef_stats(
     coef_var_active: NDArray[np.float64] = np.diag(XtX_active_inv) * s2_active
     std_err_active: NDArray[np.float64] = np.sqrt(np.clip(coef_var_active, 0.0, None))
     df_active = max(1, n - p_active - 1)
-    t_active: NDArray[np.float64] = coef[active] / np.where(std_err_active > 0, std_err_active, 1e-300)
-    p_active_vals: NDArray[np.float64] = 2.0 * scipy_stats.t.sf(np.abs(t_active), df=df_active)
+    t_active: NDArray[np.float64] = coef[active] / np.where(
+        std_err_active > 0, std_err_active, 1e-300
+    )
+    p_active_vals: NDArray[np.float64] = 2.0 * scipy_stats.t.sf(
+        np.abs(t_active), df=df_active
+    )
     t_crit_active = float(scipy_stats.t.ppf(0.975, df=df_active))
     ci_active: NDArray[np.float64] = np.column_stack(
-        [coef[active] - t_crit_active * std_err_active,
-         coef[active] + t_crit_active * std_err_active]
+        [
+            coef[active] - t_crit_active * std_err_active,
+            coef[active] + t_crit_active * std_err_active,
+        ]
     )
     # Expand to full size (zeros / ones for inactive coefficients)
     std_err_full: NDArray[np.float64] = np.zeros(p)
@@ -773,7 +791,7 @@ def r_squared_0(y_true: ArrayLike, y_pred: ArrayLike) -> float:
         :math:`R^2_0 = 1 - \\sum(y_i - \\hat{y}_i)^2 / \\sum y_i^2`
     """
     y, yh = _to_float_array(y_true), _to_float_array(y_pred)
-    return float(1.0 - np.sum((y - yh) ** 2) / np.sum(y ** 2))
+    return float(1.0 - np.sum((y - yh) ** 2) / np.sum(y**2))
 
 
 def r_squared_0_prime(y_true: ArrayLike, y_pred: ArrayLike) -> float:
@@ -792,7 +810,7 @@ def r_squared_0_prime(y_true: ArrayLike, y_pred: ArrayLike) -> float:
         :math:`R'^2_0 = 1 - \\sum(y_i - \\hat{y}_i)^2 / \\sum \\hat{y}_i^2`
     """
     y, yh = _to_float_array(y_true), _to_float_array(y_pred)
-    return float(1.0 - np.sum((y - yh) ** 2) / np.sum(yh ** 2))
+    return float(1.0 - np.sum((y - yh) ** 2) / np.sum(yh**2))
 
 
 # ---------------------------------------------------------------------------
@@ -900,7 +918,7 @@ def closeness(y_true: ArrayLike, y_pred: ArrayLike) -> float:
     """
     r2 = r_squared(y_true, y_pred)
     r2_0 = r_squared_0(y_true, y_pred)
-    return float(np.abs(r2 - r2_0) / r2)
+    return float(np.abs(r2 - r2_0) / r2 if r2 > 0 else 0.0)
 
 
 def closeness_prime(y_true: ArrayLike, y_pred: ArrayLike) -> float:
@@ -920,7 +938,7 @@ def closeness_prime(y_true: ArrayLike, y_pred: ArrayLike) -> float:
     """
     r2 = r_squared(y_true, y_pred)
     r2_0p = r_squared_0_prime(y_true, y_pred)
-    return float(np.abs(r2 - r2_0p) / r2)
+    return float(np.abs(r2 - r2_0p) / r2 if r2 > 0 else 0.0)
 
 
 # ---------------------------------------------------------------------------

@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from qsarify.preprocessing.splitters import random_split, stratified_split
 
@@ -10,7 +9,9 @@ from qsarify.preprocessing.splitters import random_split, stratified_split
 N = 50
 RNG_SEED = 42
 
-X = pd.DataFrame(np.arange(N * 3, dtype=float).reshape(N, 3), columns=["d1", "d2", "d3"])
+X = pd.DataFrame(
+    np.arange(N * 3, dtype=float).reshape(N, 3), columns=["d1", "d2", "d3"]
+)
 y = pd.Series(np.linspace(0.0, 10.0, N), name="y")
 
 

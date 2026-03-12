@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import matplotlib
+
 matplotlib.use("Agg")  # non-interactive backend; must precede pyplot import
 
 import matplotlib.pyplot as plt
@@ -217,8 +218,11 @@ def test_plot_williams_threshold_line_present():
     fig = plot_williams(result)
     ax = fig.axes[0]
     # Check that a vertical line at h_star exists among the axes lines
-    vlines_x = [line.get_xdata()[0] for line in ax.lines if len(line.get_xdata()) == 2
-                and line.get_xdata()[0] == line.get_xdata()[1]]
+    vlines_x = [
+        line.get_xdata()[0]
+        for line in ax.lines
+        if len(line.get_xdata()) == 2 and line.get_xdata()[0] == line.get_xdata()[1]
+    ]
     assert any(abs(x - h_star) < 1e-6 for x in vlines_x), (
         f"Expected vertical line at h*={h_star}, found x-positions: {vlines_x}"
     )
@@ -260,9 +264,7 @@ def test_plot_williams_x_is_leverage():
     fig = plot_williams(result)
     ax = fig.axes[0]
     scatter_x = ax.collections[0].get_offsets()[:, 0]
-    np.testing.assert_array_almost_equal(
-        np.sort(scatter_x), np.sort(result.leverage)
-    )
+    np.testing.assert_array_almost_equal(np.sort(scatter_x), np.sort(result.leverage))
     plt.close(fig)
 
 
